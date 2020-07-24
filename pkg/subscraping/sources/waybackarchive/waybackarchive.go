@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/projectdiscovery/subfinder/pkg/subscraping"
 )
@@ -36,6 +37,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			line, _ = url.QueryUnescape(line)
 			match := session.Extractor.FindAllString(line, -1)
 			for _, subdomain := range match {
+				// fix for triple encoded URL
+				subdomain = strings.ToLower(subdomain)
+				subdomain = strings.TrimPrefix(subdomain, "25")
+				subdomain = strings.TrimPrefix(subdomain, "2f")
+
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 			}
 		}
