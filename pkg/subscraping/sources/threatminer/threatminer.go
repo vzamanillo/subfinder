@@ -31,11 +31,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 
+		defer resp.Body.Close()
+
 		data := response{}
 
 		// Marshall json response
 		err = jsoniter.NewDecoder(resp.Body).Decode(&data)
-		resp.Body.Close()
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			close(results)
