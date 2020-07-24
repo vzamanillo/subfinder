@@ -3,9 +3,9 @@
 package github
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -82,7 +82,6 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 	// Initial request to GitHub search
 	resp, err := session.Get(ctx, searchURL, "", headers)
 	isForbidden := resp != nil && resp.StatusCode == http.StatusForbidden
-
 	if err != nil && !isForbidden {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 		session.DiscardHTTPResponse(resp)
@@ -96,68 +95,74 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 		tokens.setCurrentTokenExceeded(retryAfterSeconds)
 
 		s.enumerate(ctx, searchURL, domainRegexp, tokens, session, results)
-	} else {
-		// Links header, first, next, last...
-		linksHeader := linkheader.Parse(resp.Header.Get("Link"))
+	}
 
-		data := response{}
+	data := response{}
 
-		// Marshall json response
-		err = jsoniter.NewDecoder(resp.Body).Decode(&data)
-		resp.Body.Close()
-		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			return
-		}
+	// Marshall json response
+	err = jsoniter.NewDecoder(resp.Body).Decode(&data)
+	resp.Body.Close()
+	if err != nil {
+		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		return
+	}
 
-		// Response items iteration
-		for _, item := range data.Items {
-			resp, err := session.SimpleGet(ctx, rawURL(item.HTMLURL))
+	subdomains, err := proccesItems(ctx, session, data.Items, domainRegexp)
+	if err != nil {
+		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		return
+	}
+	for _, subdomain := range unique(subdomains) {
+		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+	}
+
+	// Links header, first, next, last...
+	linksHeader := linkheader.Parse(resp.Header.Get("Link"))
+	// Process the next link recursively
+	for _, link := range linksHeader {
+		if link.Rel == "next" {
+			nextURL, err := url.QueryUnescape(link.URL)
 			if err != nil {
-				if resp != nil && resp.StatusCode != http.StatusNotFound {
-					session.DiscardHTTPResponse(resp)
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-					return
-				}
+				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				return
 			}
-
-			var subdomains []string
-
-			if resp.StatusCode == http.StatusOK {
-				// Get the item code from the raw file url
-				code, err := ioutil.ReadAll(resp.Body)
-				resp.Body.Close()
-				if err != nil {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-					return
-				}
-				// Search for domain matches in the code
-				subdomains = append(subdomains, matches(domainRegexp, normalizeContent(string(code)))...)
-			}
-
-			// Text matches iteration per item
-			for _, textMatch := range item.TextMatches {
-				// Search for domain matches in the text fragment
-				subdomains = append(subdomains, matches(domainRegexp, normalizeContent(textMatch.Fragment))...)
-			}
-
-			for _, subdomain := range unique(subdomains) {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
-			}
-		}
-
-		// Process the next link recursively
-		for _, link := range linksHeader {
-			if link.Rel == "next" {
-				nextURL, err := url.QueryUnescape(link.URL)
-				if err != nil {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-					return
-				}
-				s.enumerate(ctx, nextURL, domainRegexp, tokens, session, results)
-			}
+			s.enumerate(ctx, nextURL, domainRegexp, tokens, session, results)
 		}
 	}
+}
+
+// proccesItems procceses github response items
+func proccesItems(ctx context.Context, session *subscraping.Session, items []item, domainRegexp *regexp.Regexp) ([]string, error) {
+	subdomains := []string{}
+	for _, item := range items {
+		// find subdomains in code
+		resp, err := session.SimpleGet(ctx, rawURL(item.HTMLURL))
+		if err != nil {
+			if resp != nil && resp.StatusCode != http.StatusNotFound {
+				session.DiscardHTTPResponse(resp)
+				return subdomains, err
+			}
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if line == "" {
+					continue
+				}
+				subdomains = append(subdomains, matches(domainRegexp, normalizeContent(line))...)
+			}
+		}
+
+		// find subdomains in text matches
+		for _, textMatch := range item.TextMatches {
+			subdomains = append(subdomains, matches(domainRegexp, normalizeContent(textMatch.Fragment))...)
+		}
+	}
+	return subdomains, nil
 }
 
 // Normalize content before matching, query unescape, remove tabs and new line chars
