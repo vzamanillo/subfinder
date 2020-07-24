@@ -1,9 +1,9 @@
 package commoncrawl
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -81,26 +81,25 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 		case <-ctx.Done():
 			return false
 		default:
-			resp, err := session.SimpleGet(ctx, fmt.Sprintf("%s?url=*.%s&output=json", searchURL, domain))
+			resp, err := session.SimpleGet(ctx, fmt.Sprintf("%s?url=*.%s", searchURL, domain))
 			if err != nil {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				session.DiscardHTTPResponse(resp)
 				return false
 			}
 
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-				resp.Body.Close()
-				return false
-			}
-			resp.Body.Close()
+			defer resp.Body.Close()
 
-			src, _ := url.QueryUnescape(string(body))
-
-			for _, subdomain := range session.Extractor.FindAllString(src, -1) {
-				subdomain = strings.TrimPrefix(subdomain, "25")
-
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if line == "" {
+					continue
+				}
+				line, _ = url.QueryUnescape(line)
+				for _, subdomain := range session.Extractor.FindAllString(line, -1) {
+					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+				}
 			}
 			return true
 		}

@@ -1,9 +1,9 @@
 package hackertarget
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/projectdiscovery/subfinder/pkg/subscraping"
 )
@@ -24,19 +24,18 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 
-		// Get the response body
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			resp.Body.Close()
-			close(results)
-			return
-		}
-		resp.Body.Close()
-		src := string(body)
+		defer resp.Body.Close()
 
-		for _, match := range session.Extractor.FindAllString(src, -1) {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: match}
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				continue
+			}
+			match := session.Extractor.FindAllString(line, -1)
+			for _, subdomain := range match {
+				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+			}
 		}
 		close(results)
 	}()

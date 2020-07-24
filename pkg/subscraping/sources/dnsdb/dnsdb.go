@@ -40,7 +40,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			}
 
 			defer resp.Body.Close()
-			// Get the response body
+
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
 				line := scanner.Text()

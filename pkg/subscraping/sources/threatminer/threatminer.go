@@ -3,10 +3,17 @@ package threatminer
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/projectdiscovery/subfinder/pkg/subscraping"
 )
+
+type response struct {
+	StatusCode    string   `json:"status_code"`
+	StatusMessage string   `json:"status_message"`
+	Results       []string `json:"results"`
+}
 
 // Source is the passive scraping agent
 type Source struct{}
@@ -24,20 +31,19 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 
-		// Get the response body
-		body, err := ioutil.ReadAll(resp.Body)
+		data := response{}
+
+		// Marshall json response
+		err = jsoniter.NewDecoder(resp.Body).Decode(&data)
+		resp.Body.Close()
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			resp.Body.Close()
 			close(results)
 			return
 		}
-		resp.Body.Close()
 
-		src := string(body)
-
-		for _, match := range session.Extractor.FindAllString(src, -1) {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: match}
+		for _, subdomain := range data.Results {
+			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 		}
 		close(results)
 	}()
