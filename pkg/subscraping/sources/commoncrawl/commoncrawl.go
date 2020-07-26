@@ -88,8 +88,6 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 				return false
 			}
 
-			defer resp.Body.Close()
-
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
 				line := scanner.Text()
@@ -106,6 +104,7 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 				}
 			}
+			resp.Body.Close()
 			return true
 		}
 	}
