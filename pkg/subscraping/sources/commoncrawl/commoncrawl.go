@@ -81,7 +81,8 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 		case <-ctx.Done():
 			return false
 		default:
-			resp, err := session.SimpleGet(ctx, fmt.Sprintf("%s?url=*.%s", searchURL, domain))
+			var headers = map[string]string{"Host": "index.commoncrawl.org"}
+			resp, err := session.Get(ctx, fmt.Sprintf("%s?url=*.%s", searchURL, domain), "", headers)
 			if err != nil {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 				session.DiscardHTTPResponse(resp)
@@ -95,7 +96,8 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 					continue
 				}
 				line, _ = url.QueryUnescape(line)
-				for _, subdomain := range session.Extractor.FindAllString(line, -1) {
+				subdomain := session.Extractor.FindString(line)
+				if subdomain != "" {
 					// fix for triple encoded URL
 					subdomain = strings.ToLower(subdomain)
 					subdomain = strings.TrimPrefix(subdomain, "25")
