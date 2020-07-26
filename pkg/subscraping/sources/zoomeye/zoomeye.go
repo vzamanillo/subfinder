@@ -71,7 +71,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				return
 			}
 
-			defer resp.Body.Close()
 			res := &zoomeyeResults{}
 			err = json.NewDecoder(resp.Body).Decode(res)
 			if err != nil {
@@ -112,6 +111,7 @@ func doLogin(ctx context.Context, session *subscraping.Session) (string, error) 
 	}
 
 	defer resp.Body.Close()
+
 	login := &loginResp{}
 	err = json.NewDecoder(resp.Body).Decode(login)
 	if err != nil {
