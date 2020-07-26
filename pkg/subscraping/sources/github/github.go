@@ -93,6 +93,7 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 	if isForbidden && ratelimitRemaining == 0 {
 		retryAfterSeconds, _ := strconv.ParseInt(resp.Header.Get("Retry-After"), 10, 64)
 		tokens.setCurrentTokenExceeded(retryAfterSeconds)
+		resp.Body.Close()
 
 		s.enumerate(ctx, searchURL, domainRegexp, tokens, session, results)
 	}
