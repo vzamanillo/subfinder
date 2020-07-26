@@ -112,7 +112,7 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 		return
 	}
-	for _, subdomain := range unique(subdomains) {
+	for _, subdomain := range subdomains {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 	}
 
@@ -144,8 +144,6 @@ func proccesItems(ctx context.Context, session *subscraping.Session, items []ite
 			}
 		}
 
-		defer resp.Body.Close()
-
 		if resp.StatusCode == http.StatusOK {
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
@@ -153,13 +151,14 @@ func proccesItems(ctx context.Context, session *subscraping.Session, items []ite
 				if line == "" {
 					continue
 				}
-				subdomains = append(subdomains, matches(domainRegexp, normalizeContent(line))...)
+				subdomains = append(subdomains, domainRegexp.FindAllString(normalizeContent(line), -1)...)
 			}
+			resp.Body.Close()
 		}
 
 		// find subdomains in text matches
 		for _, textMatch := range item.TextMatches {
-			subdomains = append(subdomains, matches(domainRegexp, normalizeContent(textMatch.Fragment))...)
+			subdomains = append(subdomains, domainRegexp.FindAllString(normalizeContent(textMatch.Fragment), -1)...)
 		}
 	}
 	return subdomains, nil
@@ -171,29 +170,6 @@ func normalizeContent(content string) string {
 	normalizedContent = strings.ReplaceAll(normalizedContent, "\\t", "")
 	normalizedContent = strings.ReplaceAll(normalizedContent, "\\n", "")
 	return normalizedContent
-}
-
-// Remove duplicates from string array
-func unique(arr []string) []string {
-	occurred := map[string]bool{}
-	result := []string{}
-	for e := range arr {
-		if !occurred[arr[e]] {
-			occurred[arr[e]] = true
-			result = append(result, arr[e])
-		}
-	}
-	return result
-}
-
-// Find matches by regular expression in any content
-func matches(regex *regexp.Regexp, content string) []string {
-	var matches []string
-	match := regex.FindAllString(content, -1)
-	if len(match) > 0 {
-		matches = unique(match)
-	}
-	return matches
 }
 
 // Raw URL to get the files code and match for subdomains
