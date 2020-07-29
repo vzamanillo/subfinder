@@ -2,6 +2,7 @@ package dnsdumpster
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"regexp"
@@ -34,7 +35,7 @@ func postForm(ctx context.Context, session *subscraping.Session, token, domain s
 		ctx,
 		"POST",
 		"https://dnsdumpster.com/",
-		"csrftoken="+token+"; Domain=dnsdumpster.com",
+		fmt.Sprintf("csrftoken=%s; Domain=dnsdumpster.com", token),
 		map[string]string{
 			"Content-Type": "application/x-www-form-urlencoded",
 			"Referer":      "https://dnsdumpster.com",
