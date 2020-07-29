@@ -65,7 +65,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	}
 
 	go func() {
-		aInstance.enumerate(ctx, fmt.Sprintf("http://archive.is/*.%s", domain),)
+		aInstance.enumerate(ctx, fmt.Sprintf("http://archive.is/*.%s", domain))
 		close(aInstance.Results)
 	}()
 
