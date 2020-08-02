@@ -98,7 +98,7 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 		s.enumerate(ctx, searchURL, domainRegexp, tokens, session, results)
 	}
 
-	data := response{}
+	var data response
 
 	// Marshall json response
 	err = jsoniter.NewDecoder(resp.Body).Decode(&data)

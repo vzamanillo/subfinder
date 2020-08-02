@@ -44,7 +44,7 @@ func (s *Source) getData(ctx context.Context, sourceURL string, session *subscra
 
 	defer resp.Body.Close()
 
-	bufforesponse := response{}
+	var bufforesponse response
 	err = jsoniter.NewDecoder(resp.Body).Decode(&bufforesponse)
 	if err != nil {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}

@@ -2,11 +2,12 @@ package dnsdb
 
 import (
 	"bufio"
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping"
 )
 
@@ -47,8 +48,8 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				if line == "" {
 					continue
 				}
-				out := &dnsdbResponse{}
-				err := json.Unmarshal([]byte(line), out)
+				var out dnsdbResponse
+				err = jsoniter.NewDecoder(bytes.NewBufferString(line)).Decode(&out)
 				if err != nil {
 					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 					resp.Body.Close()
@@ -56,7 +57,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 					return
 				}
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: strings.TrimSuffix(out.Name, ".")}
-				out = nil
 			}
 			close(results)
 		}()

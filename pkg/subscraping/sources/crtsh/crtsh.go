@@ -81,7 +81,7 @@ func (s *Source) getSubdomainsFromHTTP(ctx context.Context, domain string, sessi
 
 	defer resp.Body.Close()
 
-	subdomains := []subdomain{}
+	var subdomains []subdomain
 	err = jsoniter.NewDecoder(resp.Body).Decode(&subdomains)
 	if err != nil {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
