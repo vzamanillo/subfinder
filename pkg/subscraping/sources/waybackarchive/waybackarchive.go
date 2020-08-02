@@ -18,11 +18,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		pagesResp, err := session.SimpleGet(ctx, fmt.Sprintf("http://web.archive.org/cdx/search/cdx?url=*.%s/*&output=txt&fl=original&collapse=urlkey", domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(pagesResp)
-			close(results)
 			return
 		}
 
@@ -45,8 +46,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 			}
 		}
-
-		close(results)
 	}()
 
 	return results

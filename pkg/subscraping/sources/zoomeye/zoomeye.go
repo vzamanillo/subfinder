@@ -37,22 +37,23 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		if session.Keys.ZoomEyeUsername == "" || session.Keys.ZoomEyePassword == "" {
-			close(results)
 			return
 		}
+
 		jwt, err := doLogin(ctx, session)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			close(results)
 			return
 		}
 		// check if jwt is null
 		if jwt == "" {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: errors.New("could not log into zoomeye")}
-			close(results)
 			return
 		}
+
 		headers := map[string]string{
 			"Authorization": fmt.Sprintf("JWT %s", jwt),
 			"Accept":        "application/json",
@@ -67,7 +68,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 					session.DiscardHTTPResponse(resp)
 				}
-				close(results)
 				return
 			}
 
@@ -76,7 +76,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			if err != nil {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 				resp.Body.Close()
-				close(results)
 				return
 			}
 			resp.Body.Close()
@@ -88,7 +87,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			}
 			currentPage++
 		}
-		close(results)
 	}()
 
 	return results

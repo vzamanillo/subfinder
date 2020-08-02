@@ -25,13 +25,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
 		found := s.getSubdomainsFromSQL(domain, results)
 		if found {
-			close(results)
 			return
 		}
 		_ = s.getSubdomainsFromHTTP(ctx, domain, session, results)
-		close(results)
 	}()
 
 	return results

@@ -20,8 +20,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		if session.Keys.PassiveTotalUsername == "" || session.Keys.PassiveTotalPassword == "" {
-			close(results)
 			return
 		}
 
@@ -40,7 +41,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
-			close(results)
 			return
 		}
 
@@ -49,7 +49,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			resp.Body.Close()
-			close(results)
 			return
 		}
 		resp.Body.Close()
@@ -58,7 +57,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			finalSubdomain := subdomain + "." + domain
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: finalSubdomain}
 		}
-		close(results)
 	}()
 
 	return results

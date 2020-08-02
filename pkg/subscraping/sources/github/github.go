@@ -43,8 +43,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		if len(session.Keys.GitHub) == 0 {
-			close(results)
 			return
 		}
 
@@ -53,7 +54,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		// search on GitHub with exact match
 		searchURL := fmt.Sprintf("https://api.github.com/search/code?per_page=100&q=\"%s\"", domain)
 		s.enumerate(ctx, searchURL, domainRegexp(domain), tokens, session, results)
-		close(results)
 	}()
 
 	return results

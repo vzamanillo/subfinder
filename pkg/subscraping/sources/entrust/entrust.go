@@ -17,11 +17,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://ctsearch.entrust.com/api/v1/certificates?fields=issuerCN,subjectO,issuerDN,issuerO,subjectDN,signAlg,san,publicKeyType,publicKeySize,validFrom,validTo,sn,ev,logEntries.logName,subjectCNReversed,cert&domain=%s&includeExpired=true&exactMatch=false&limit=5000", domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
-			close(results)
 			return
 		}
 
@@ -29,7 +30,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			resp.Body.Close()
-			close(results)
 			return
 		}
 		resp.Body.Close()
@@ -41,7 +41,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 		}
-		close(results)
 	}()
 
 	return results

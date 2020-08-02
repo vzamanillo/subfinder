@@ -21,11 +21,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://certspotter.com/api/v0/certs?domain=%s", domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
-			close(results)
 			return
 		}
 
@@ -35,7 +36,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		err = jsoniter.NewDecoder(resp.Body).Decode(&subdomains)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			close(results)
 			return
 		}
 
@@ -44,8 +44,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: dnsname}
 			}
 		}
-
-		close(results)
 	}()
 	return results
 }

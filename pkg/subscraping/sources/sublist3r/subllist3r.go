@@ -16,11 +16,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://api.sublist3r.com/search.php?domain=%s", domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
-			close(results)
 			return
 		}
 		defer resp.Body.Close()
@@ -30,14 +31,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			resp.Body.Close()
-			close(results)
 			return
 		}
 
 		for _, subdomain := range subdomains {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 		}
-		close(results)
 	}()
 
 	return results

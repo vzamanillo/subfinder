@@ -21,11 +21,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://www.threatcrowd.org/searchApi/v2/domain/report/?domain=%s", domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
-			close(results)
 			return
 		}
 
@@ -35,14 +36,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		err = jsoniter.NewDecoder(resp.Body).Decode(&data)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			close(results)
 			return
 		}
 
 		for _, subdomain := range data.Subdomains {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 		}
-		close(results)
 	}()
 
 	return results

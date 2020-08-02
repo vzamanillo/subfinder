@@ -20,8 +20,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	results := make(chan subscraping.Result)
 
 	go func() {
+		defer close(results)
+
 		if session.Keys.Virustotal == "" {
-			close(results)
 			return
 		}
 
@@ -29,7 +30,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
-			close(results)
 			return
 		}
 
@@ -38,7 +38,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			resp.Body.Close()
-			close(results)
 			return
 		}
 		resp.Body.Close()
@@ -46,7 +45,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		for _, subdomain := range data.Subdomains {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 		}
-		close(results)
 	}()
 
 	return results

@@ -43,6 +43,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 	go func() {
 		defer close(results)
+
 		if session.Keys.IntelXKey == "" || session.Keys.IntelXHost == "" {
 			return
 		}
@@ -73,7 +74,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			close(results)
 			return
 		}
 
