@@ -52,7 +52,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		// search on GitHub with exact match
 		searchURL := fmt.Sprintf("https://api.github.com/search/code?per_page=100&q=\"%s\"", domain)
-		s.enumerate(ctx, searchURL, s.DomainRegexp(domain), tokens, session, results)
+		s.enumerate(ctx, searchURL, domainRegexp(domain), tokens, session, results)
 		close(results)
 	}()
 
@@ -108,13 +108,10 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 		return
 	}
 
-	subdomains, err := proccesItems(ctx, session, data.Items, domainRegexp)
+	err = proccesItems(ctx, data.Items, domainRegexp, s.Name(), session, results)
 	if err != nil {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 		return
-	}
-	for _, subdomain := range subdomains {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
 	}
 
 	// Links header, first, next, last...
@@ -133,15 +130,14 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 }
 
 // proccesItems procceses github response items
-func proccesItems(ctx context.Context, session *subscraping.Session, items []item, domainRegexp *regexp.Regexp) ([]string, error) {
-	subdomains := []string{}
+func proccesItems(ctx context.Context, items []item, domainRegexp *regexp.Regexp, name string, session *subscraping.Session, results chan subscraping.Result) error {
 	for _, item := range items {
 		// find subdomains in code
 		resp, err := session.SimpleGet(ctx, rawURL(item.HTMLURL))
 		if err != nil {
 			if resp != nil && resp.StatusCode != http.StatusNotFound {
 				session.DiscardHTTPResponse(resp)
-				return subdomains, err
+				return err
 			}
 		}
 
@@ -152,17 +148,21 @@ func proccesItems(ctx context.Context, session *subscraping.Session, items []ite
 				if line == "" {
 					continue
 				}
-				subdomains = append(subdomains, domainRegexp.FindAllString(normalizeContent(line), -1)...)
+				for _, subdomain := range domainRegexp.FindAllString(normalizeContent(line), -1) {
+					results <- subscraping.Result{Source: name, Type: subscraping.Subdomain, Value: subdomain}
+				}
 			}
 			resp.Body.Close()
 		}
 
 		// find subdomains in text matches
 		for _, textMatch := range item.TextMatches {
-			subdomains = append(subdomains, domainRegexp.FindAllString(normalizeContent(textMatch.Fragment), -1)...)
+			for _, subdomain := range domainRegexp.FindAllString(normalizeContent(textMatch.Fragment), -1) {
+				results <- subscraping.Result{Source: name, Type: subscraping.Subdomain, Value: subdomain}
+			}
 		}
 	}
-	return subdomains, nil
+	return nil
 }
 
 // Normalize content before matching, query unescape, remove tabs and new line chars
@@ -180,7 +180,7 @@ func rawURL(htmlURL string) string {
 }
 
 // DomainRegexp regular expression to match subdomains in github files code
-func (s *Source) DomainRegexp(domain string) *regexp.Regexp {
+func domainRegexp(domain string) *regexp.Regexp {
 	rdomain := strings.ReplaceAll(domain, ".", "\\.")
 	return regexp.MustCompile("(\\w+[.])*" + rdomain)
 }
