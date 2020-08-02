@@ -65,6 +65,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				resp.Body.Close()
 				return
 			}
+
 			resp.Body.Close()
 
 			// Exit the censys enumeration if max pages is reached

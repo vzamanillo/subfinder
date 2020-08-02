@@ -40,6 +40,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			resp.Body.Close()
 			return
 		}
+
 		resp.Body.Close()
 
 		for _, subdomain := range data.Subdomains {

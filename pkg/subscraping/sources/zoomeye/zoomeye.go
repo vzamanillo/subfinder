@@ -79,6 +79,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				return
 			}
 			resp.Body.Close()
+
 			for _, r := range res.Matches {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: r.Site}
 				for _, domain := range r.Domains {
@@ -110,8 +111,8 @@ func doLogin(ctx context.Context, session *subscraping.Session) (string, error) 
 
 	defer resp.Body.Close()
 
-	login := &loginResp{}
-	err = json.NewDecoder(resp.Body).Decode(login)
+	var login loginResp
+	err = json.NewDecoder(resp.Body).Decode(&login)
 	if err != nil {
 		return "", err
 	}

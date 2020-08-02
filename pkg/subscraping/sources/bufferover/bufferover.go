@@ -42,14 +42,15 @@ func (s *Source) getData(ctx context.Context, sourceURL string, session *subscra
 		return
 	}
 
-	defer resp.Body.Close()
-
 	var bufforesponse response
 	err = jsoniter.NewDecoder(resp.Body).Decode(&bufforesponse)
 	if err != nil {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		resp.Body.Close()
 		return
 	}
+
+	resp.Body.Close()
 
 	var subdomains []string
 

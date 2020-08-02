@@ -35,7 +35,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		resp.Body.Close()
 
 		src := string(body)
-
 		for _, subdomain := range session.Extractor.FindAllString(src, -1) {
 			subdomain = strings.TrimPrefix(subdomain, "u003d")
 

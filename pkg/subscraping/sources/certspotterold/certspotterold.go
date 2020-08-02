@@ -30,14 +30,15 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 
-		defer resp.Body.Close()
-
 		var subdomains []subdomain
 		err = jsoniter.NewDecoder(resp.Body).Decode(&subdomains)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			resp.Body.Close()
 			return
 		}
+
+		resp.Body.Close()
 
 		for _, subdomain := range subdomains {
 			for _, dnsname := range subdomain.DNSNames {

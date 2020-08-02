@@ -42,7 +42,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 
-		defer resp.Body.Close()
+		var response dnsdbResponse
 
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {
@@ -50,15 +50,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			if line == "" {
 				continue
 			}
-			var out dnsdbResponse
-			err = jsoniter.NewDecoder(bytes.NewBufferString(line)).Decode(&out)
+			err = jsoniter.NewDecoder(bytes.NewBufferString(line)).Decode(&response)
 			if err != nil {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-				resp.Body.Close()
 				return
 			}
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: strings.TrimSuffix(out.Name, ".")}
+			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: strings.TrimSuffix(response.Name, ".")}
 		}
+		resp.Body.Close()
 	}()
 	return results
 }

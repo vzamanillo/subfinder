@@ -80,8 +80,8 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 		resp.Body.Close()
-		csrfToken := getCSRFToken(string(body))
 
+		csrfToken := getCSRFToken(string(body))
 		data, err := postForm(ctx, session, csrfToken, domain)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}

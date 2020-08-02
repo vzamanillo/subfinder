@@ -33,8 +33,8 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 		resp.Body.Close()
-		src := string(body)
 
+		src := string(body)
 		regxTokens := regexp.MustCompile("/ip-address/(.*)/" + domain)
 		matchTokens := regxTokens.FindAllString(src, -1)
 
@@ -47,13 +47,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		resp, err = session.SimpleGet(ctx, "http://ipv4info.com"+token)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			session.DiscardHTTPResponse(resp)
 			return
 		}
 
 		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			resp.Body.Close()
+			session.DiscardHTTPResponse(resp)
 			return
 		}
 		resp.Body.Close()
@@ -69,6 +70,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		resp, err = session.SimpleGet(ctx, "http://ipv4info.com"+token)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			session.DiscardHTTPResponse(resp)
 			return
 		}
 
@@ -79,8 +81,8 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 		resp.Body.Close()
-		src = string(body)
 
+		src = string(body)
 		regxTokens = regexp.MustCompile("/subdomains/(.*?)/" + domain)
 		matchTokens = regxTokens.FindAllString(src, -1)
 		if len(matchTokens) == 0 {
@@ -91,6 +93,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		resp, err = session.SimpleGet(ctx, "http://ipv4info.com"+token)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			session.DiscardHTTPResponse(resp)
 			return
 		}
 
@@ -101,8 +104,8 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 		resp.Body.Close()
-		src = string(body)
 
+		src = string(body)
 		for _, match := range session.Extractor.FindAllString(src, -1) {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: match}
 		}

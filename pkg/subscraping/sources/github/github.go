@@ -102,11 +102,13 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 
 	// Marshall json response
 	err = jsoniter.NewDecoder(resp.Body).Decode(&data)
-	resp.Body.Close()
 	if err != nil {
 		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		resp.Body.Close()
 		return
 	}
+
+	resp.Body.Close()
 
 	err = proccesItems(ctx, data.Items, domainRegexp, s.Name(), session, results)
 	if err != nil {

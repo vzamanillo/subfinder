@@ -20,16 +20,16 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		pagesResp, err := session.SimpleGet(ctx, fmt.Sprintf("http://web.archive.org/cdx/search/cdx?url=*.%s/*&output=txt&fl=original&collapse=urlkey", domain))
+		resp, err := session.SimpleGet(ctx, fmt.Sprintf("http://web.archive.org/cdx/search/cdx?url=*.%s/*&output=txt&fl=original&collapse=urlkey", domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
-			session.DiscardHTTPResponse(pagesResp)
+			session.DiscardHTTPResponse(resp)
 			return
 		}
 
-		defer pagesResp.Body.Close()
+		defer resp.Body.Close()
 
-		scanner := bufio.NewScanner(pagesResp.Body)
+		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {
 			line := scanner.Text()
 			if line == "" {
