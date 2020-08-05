@@ -72,7 +72,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			}
 
 			var res zoomeyeResults
-			err = json.NewDecoder(resp.Body).Decode(res)
+			err = json.NewDecoder(resp.Body).Decode(&res)
 			if err != nil {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 				resp.Body.Close()
