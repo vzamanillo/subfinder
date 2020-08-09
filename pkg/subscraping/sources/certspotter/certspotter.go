@@ -14,7 +14,8 @@ type certspotterObject struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
+type Source struct {
+	Name  string
 	Token string
 }
 
@@ -31,7 +32,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.Get(ctx, fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names", domain), "", map[string]string{"Authorization": "Bearer " + s.Token})
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -39,7 +40,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var response []certspotterObject
 		err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -47,7 +48,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		for _, cert := range response {
 			for _, subdomain := range cert.DNSNames {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 			}
 		}
 
@@ -62,14 +63,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 			resp, err := session.Get(ctx, reqURL, "", map[string]string{"Authorization": "Bearer " + s.Token})
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				return
 			}
 
 			var response []certspotterObject
 			err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
@@ -81,7 +82,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 			for _, cert := range response {
 				for _, subdomain := range cert.DNSNames {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 				}
 			}
 
@@ -90,9 +91,4 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "certspotter"
 }

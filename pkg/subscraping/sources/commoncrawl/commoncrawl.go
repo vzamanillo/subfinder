@@ -19,7 +19,9 @@ type indexResponse struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct {
+	Name string
+}
 
 var years = [...]string{"2020", "2019", "2018", "2017"}
 
@@ -32,7 +34,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, indexURL)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -40,7 +42,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var indexes []indexResponse
 		err = jsoniter.NewDecoder(resp.Body).Decode(&indexes)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -69,11 +71,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	return results
 }
 
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "commoncrawl"
-}
-
 func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, session *subscraping.Session, results chan subscraping.Result) bool {
 	for {
 		select {
@@ -83,7 +80,7 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 			var headers = map[string]string{"Host": "index.commoncrawl.org"}
 			resp, err := session.Get(ctx, fmt.Sprintf("%s?url=*.%s", searchURL, domain), "", headers)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				session.DiscardHTTPResponse(resp)
 				return false
 			}
@@ -102,7 +99,7 @@ func (s *Source) getSubdomains(ctx context.Context, searchURL, domain string, se
 					subdomain = strings.TrimPrefix(subdomain, "25")
 					subdomain = strings.TrimPrefix(subdomain, "2f")
 
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 				}
 			}
 			resp.Body.Close()

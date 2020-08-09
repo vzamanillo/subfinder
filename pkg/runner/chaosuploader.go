@@ -33,7 +33,7 @@ func (r *Runner) UploadToChaos(ctx context.Context, reader io.Reader) error {
 	if err != nil {
 		return errors.Wrap(err, "could not create request")
 	}
-	request.Header.Set("Authorization", r.options.YAMLConfig.GetKeys().Chaos)
+	request.Header.Set("Authorization", r.options.YAMLConfig.Keys.Chaos)
 
 	resp, err := httpClient.Do(request)
 	if err != nil {

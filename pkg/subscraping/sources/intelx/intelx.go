@@ -35,7 +35,8 @@ type requestBody struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
+type Source struct {
+	Name string
 	Host string
 	Key  string
 }
@@ -62,13 +63,13 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		body, err := json.Marshal(reqBody)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		resp, err := session.SimplePost(ctx, searchURL, "application/json", bytes.NewBuffer(body))
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -76,7 +77,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var response searchResponseType
 		err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -88,21 +89,21 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		for status == 0 || status == 3 {
 			resp, err = session.Get(ctx, resultsURL, "", nil)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				session.DiscardHTTPResponse(resp)
 				return
 			}
 			var response searchResultType
 			err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
 
 			_, err = ioutil.ReadAll(resp.Body)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
@@ -110,15 +111,10 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 			status = response.Status
 			for _, hostname := range response.Selectors {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: hostname.Selectvalue}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: hostname.Selectvalue}
 			}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "intelx"
 }

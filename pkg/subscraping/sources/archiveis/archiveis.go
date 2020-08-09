@@ -18,7 +18,7 @@ type ArchiveIs struct {
 
 var reNext = regexp.MustCompile("<a id=\"next\" style=\".*\" href=\"(.*)\">&rarr;</a>")
 
-func (a *ArchiveIs) enumerate(ctx context.Context, baseURL string) {
+func (a *ArchiveIs) enumerate(ctx context.Context, baseURL, sourcename string) {
 	select {
 	case <-ctx.Done():
 		return
@@ -27,7 +27,7 @@ func (a *ArchiveIs) enumerate(ctx context.Context, baseURL string) {
 
 	resp, err := a.Session.SimpleGet(ctx, baseURL)
 	if err != nil {
-		a.Results <- subscraping.Result{Source: "archiveis", Type: subscraping.Error, Error: err}
+		a.Results <- subscraping.Result{Source: sourcename, Type: subscraping.Error, Error: err}
 		a.Session.DiscardHTTPResponse(resp)
 		return
 	}
@@ -35,7 +35,7 @@ func (a *ArchiveIs) enumerate(ctx context.Context, baseURL string) {
 	// Get the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		a.Results <- subscraping.Result{Source: "archiveis", Type: subscraping.Error, Error: err}
+		a.Results <- subscraping.Result{Source: sourcename, Type: subscraping.Error, Error: err}
 		resp.Body.Close()
 		return
 	}
@@ -44,17 +44,19 @@ func (a *ArchiveIs) enumerate(ctx context.Context, baseURL string) {
 
 	src := string(body)
 	for _, subdomain := range a.Session.Extractor.FindAllString(src, -1) {
-		a.Results <- subscraping.Result{Source: "archiveis", Type: subscraping.Subdomain, Value: subdomain}
+		a.Results <- subscraping.Result{Source: sourcename, Type: subscraping.Subdomain, Value: subdomain}
 	}
 
 	match1 := reNext.FindStringSubmatch(src)
 	if len(match1) > 0 {
-		a.enumerate(ctx, match1[1])
+		a.enumerate(ctx, match1[1], sourcename)
 	}
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct {
+	Name string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -66,14 +68,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	}
 
 	go func() {
-		aInstance.enumerate(ctx, fmt.Sprintf("http://archive.is/*.%s", domain))
+		aInstance.enumerate(ctx, fmt.Sprintf("http://archive.is/*.%s", domain), s.Name)
 		close(aInstance.Results)
 	}()
 
 	return aInstance.Results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "archiveis"
 }

@@ -13,12 +13,15 @@ import (
 )
 
 type subdomain struct {
+	Name      string
 	ID        int    `json:"id"`
 	NameValue string `json:"name_value"`
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct {
+	Name string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -39,7 +42,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 func (s *Source) getSubdomainsFromSQL(domain string, results chan subscraping.Result) bool {
 	db, err := sql.Open("postgres", "host=crt.sh user=guest dbname=certwatch sslmode=disable binary_parameters=yes")
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		return false
 	}
 
@@ -49,11 +52,11 @@ func (s *Source) getSubdomainsFromSQL(domain string, results chan subscraping.Re
 					  ORDER BY ci.NAME_VALUE`
 	rows, err := db.Query(query, pattern)
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		return false
 	}
 	if err := rows.Err(); err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		return false
 	}
 
@@ -62,10 +65,10 @@ func (s *Source) getSubdomainsFromSQL(domain string, results chan subscraping.Re
 	for rows.Next() {
 		err := rows.Scan(&data)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return false
 		}
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: data}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: data}
 	}
 	return true
 }
@@ -73,7 +76,7 @@ func (s *Source) getSubdomainsFromSQL(domain string, results chan subscraping.Re
 func (s *Source) getSubdomainsFromHTTP(ctx context.Context, domain string, session *subscraping.Session, results chan subscraping.Result) bool {
 	resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain))
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		session.DiscardHTTPResponse(resp)
 		return false
 	}
@@ -81,7 +84,7 @@ func (s *Source) getSubdomainsFromHTTP(ctx context.Context, domain string, sessi
 	var subdomains []subdomain
 	err = jsoniter.NewDecoder(resp.Body).Decode(&subdomains)
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		resp.Body.Close()
 		return false
 	}
@@ -89,13 +92,8 @@ func (s *Source) getSubdomainsFromHTTP(ctx context.Context, domain string, sessi
 	resp.Body.Close()
 
 	for _, subdomain := range subdomains {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain.NameValue}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain.NameValue}
 	}
 
 	return true
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "crtsh"
 }

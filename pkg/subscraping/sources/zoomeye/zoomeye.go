@@ -11,12 +11,6 @@ import (
 	"github.com/projectdiscovery/subfinder/pkg/subscraping"
 )
 
-// zoomAuth holds the ZoomEye credentials
-type zoomAuth struct {
-	User string `json:"username"`
-	Pass string `json:"password"`
-}
-
 type loginResp struct {
 	JWT string `json:"access_token"`
 }
@@ -30,9 +24,9 @@ type zoomeyeResults struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
-	Username string
-	Password string
+type Source struct {
+	Name      string
+	BasicAuth *subscraping.BasicAuth
 }
 
 // Run function returns all subdomains found with the service
@@ -42,18 +36,18 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if s.Username == "" || s.Password == "" {
+		if s.BasicAuth.Username == "" || s.BasicAuth.Password == "" {
 			return
 		}
 
-		jwt, err := doLogin(ctx, session, &zoomAuth{User: s.Username, Pass: s.Password})
+		jwt, err := doLogin(ctx, session, s.BasicAuth)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 		// check if jwt is null
 		if jwt == "" {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: errors.New("could not log into zoomeye")}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: errors.New("could not log into zoomeye")}
 			return
 		}
 
@@ -68,7 +62,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			isForbidden := resp != nil && resp.StatusCode == http.StatusForbidden
 			if err != nil {
 				if !isForbidden && currentPage == 0 {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 					session.DiscardHTTPResponse(resp)
 				}
 				return
@@ -77,16 +71,16 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			var res zoomeyeResults
 			err = json.NewDecoder(resp.Body).Decode(&res)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
 			resp.Body.Close()
 
 			for _, r := range res.Matches {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: r.Site}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: r.Site}
 				for _, domain := range r.Domains {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: domain}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: domain}
 				}
 			}
 			currentPage++
@@ -97,7 +91,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 }
 
 // doLogin performs authentication on the ZoomEye API
-func doLogin(ctx context.Context, session *subscraping.Session, auth *zoomAuth) (string, error) {
+func doLogin(ctx context.Context, session *subscraping.Session, auth *subscraping.BasicAuth) (string, error) {
 	body, err := json.Marshal(auth)
 	if err != nil {
 		return "", err
@@ -116,9 +110,4 @@ func doLogin(ctx context.Context, session *subscraping.Session, auth *zoomAuth) 
 		return "", err
 	}
 	return login.JWT, nil
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "zoomeye"
 }

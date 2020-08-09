@@ -19,8 +19,9 @@ type shodanObject struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
-	Key string
+type Source struct {
+	Name string
+	Key  string
 }
 
 // Run function returns all subdomains found with the service
@@ -37,7 +38,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		for currentPage := 0; currentPage <= 10; currentPage++ {
 			resp, err := session.SimpleGet(ctx, "https://api.shodan.io/shodan/host/search?query=hostname:"+domain+"&page="+strconv.Itoa(currentPage)+"&key="+s.Key)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				session.DiscardHTTPResponse(resp)
 				return
 			}
@@ -45,7 +46,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			var response shodanResult
 			err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
@@ -57,16 +58,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 			for _, block := range response.Matches {
 				for _, hostname := range block.Hostnames {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: hostname}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: hostname}
 				}
 			}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "shodan"
 }

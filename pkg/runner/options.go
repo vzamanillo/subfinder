@@ -126,7 +126,7 @@ func listSources(options *Options) {
 	gologger.Infof("Sources marked with an * needs key or token in order to work.\n")
 	gologger.Infof("You can modify %s to configure your keys / tokens.\n\n", options.ConfigFile)
 
-	keys := options.YAMLConfig.GetKeys()
+	keys := options.YAMLConfig.Keys
 	needsKey := make(map[string]interface{})
 	keysElem := reflect.ValueOf(&keys).Elem()
 	for i := 0; i < keysElem.NumField(); i++ {

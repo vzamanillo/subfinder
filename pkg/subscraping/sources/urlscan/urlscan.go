@@ -10,8 +10,9 @@ import (
 )
 
 // Source is the passive scraping agent
-type Source struct{
-	Key string
+type Source struct {
+	Name string
+	Key  string
 }
 
 // Run function returns all subdomains found with the service
@@ -28,32 +29,27 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		client := urlscan.NewClient(s.Key)
 		task, err := client.Submit(urlscan.SubmitArguments{URL: fmt.Sprintf("https://%s", domain)})
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		err = task.Wait()
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		data, err := jsoniter.Marshal(task.Result.Data)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		match := session.Extractor.FindAllString(string(data), -1)
 		for _, m := range match {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: m}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: m}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "urlscan"
 }

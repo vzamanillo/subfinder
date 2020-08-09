@@ -13,9 +13,9 @@ type response struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
-	Username string
-	Password string
+type Source struct {
+	Name      string
+	BasicAuth *subscraping.BasicAuth
 }
 
 // Run function returns all subdomains found with the service
@@ -25,7 +25,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if s.Username == "" || s.Password == "" {
+		if s.BasicAuth.Username == "" || s.BasicAuth.Password == "" {
 			return
 		}
 
@@ -39,10 +39,10 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			"",
 			map[string]string{"Content-Type": "application/json"},
 			bytes.NewBuffer(request),
-			subscraping.BasicAuth{Username: s.Username, Password: s.Password},
+			s.BasicAuth,
 		)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -50,7 +50,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var data response
 		err = jsoniter.NewDecoder(resp.Body).Decode(&data)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -58,14 +58,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		for _, subdomain := range data.Subdomains {
 			finalSubdomain := subdomain + "." + domain
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: finalSubdomain}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: finalSubdomain}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "passivetotal"
 }

@@ -24,9 +24,9 @@ type response struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
-	Token string
-	Secret string
+type Source struct {
+	Name      string
+	BasicAuth *subscraping.BasicAuth
 }
 
 // Run function returns all subdomains found with the service
@@ -36,7 +36,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if s.Token == "" || s.Secret == "" {
+		if s.BasicAuth.Username == "" || s.BasicAuth.Password == "" {
 			return
 		}
 
@@ -51,11 +51,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				"",
 				map[string]string{"Content-Type": "application/json", "Accept": "application/json"},
 				bytes.NewReader(request),
-				subscraping.BasicAuth{Username: s.Token, Password: s.Secret},
+				s.BasicAuth,
 			)
 
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				session.DiscardHTTPResponse(resp)
 				return
 			}
@@ -63,7 +63,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			var censysResponse response
 			err = jsoniter.NewDecoder(resp.Body).Decode(&censysResponse)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
@@ -77,10 +77,10 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 			for _, res := range censysResponse.Results {
 				for _, part := range res.Data {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: part}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: part}
 				}
 				for _, part := range res.Data1 {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: part}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: part}
 				}
 			}
 
@@ -89,9 +89,4 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "censys"
 }

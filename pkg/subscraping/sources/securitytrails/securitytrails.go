@@ -14,8 +14,9 @@ type response struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
-	Key string
+type Source struct {
+	Name string
+	Key  string
 }
 
 // Run function returns all subdomains found with the service
@@ -31,7 +32,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.Get(ctx, fmt.Sprintf("https://api.securitytrails.com/v1/domain/%s/subdomains", domain), "", map[string]string{"APIKEY": s.Key})
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -39,7 +40,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var securityTrailsResponse response
 		err = jsoniter.NewDecoder(resp.Body).Decode(&securityTrailsResponse)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -53,14 +54,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 				subdomain = subdomain + "." + domain
 			}
 
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "securitytrails"
 }

@@ -10,7 +10,9 @@ import (
 )
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct {
+	Name string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -21,14 +23,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, "http://ipv4info.com/search/"+domain)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -46,14 +48,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err = session.SimpleGet(ctx, "http://ipv4info.com"+token)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
 
 		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -69,14 +71,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		token = matchTokens[0]
 		resp, err = session.SimpleGet(ctx, "http://ipv4info.com"+token)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
 
 		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -92,14 +94,14 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		token = matchTokens[0]
 		resp, err = session.SimpleGet(ctx, "http://ipv4info.com"+token)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
 
 		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
@@ -107,7 +109,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		src = string(body)
 		for _, match := range session.Extractor.FindAllString(src, -1) {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: match}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: match}
 		}
 		nextPage := 1
 
@@ -120,11 +122,6 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "ipv4info"
 }
 
 func (s *Source) getSubdomains(ctx context.Context, domain string, nextPage *int, src string, session *subscraping.Session, results chan subscraping.Result) bool {
@@ -142,19 +139,19 @@ func (s *Source) getSubdomains(ctx context.Context, domain string, nextPage *int
 
 			resp, err := session.SimpleGet(ctx, "http://ipv4info.com"+token)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				return false
 			}
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return false
 			}
 			resp.Body.Close()
 			src = string(body)
 			for _, match := range session.Extractor.FindAllString(src, -1) {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: match}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: match}
 			}
 			*nextPage++
 			return true

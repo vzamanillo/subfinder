@@ -25,7 +25,7 @@ func (r *Runner) initializePassiveEngine() {
 		exclusions = append(exclusions, r.options.YAMLConfig.ExcludeSources...)
 	}
 
-	r.passiveAgent = passive.New(sources, exclusions, r.options.YAMLConfig.GetKeys())
+	r.passiveAgent = passive.New(sources, exclusions, &r.options.YAMLConfig.Keys)
 }
 
 // initializeActiveEngine creates the resolver used to resolve the found subdomains

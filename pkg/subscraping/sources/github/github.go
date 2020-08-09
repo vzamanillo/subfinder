@@ -36,7 +36,8 @@ type response struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{
+type Source struct {
+	Name   string
 	Tokens []string
 }
 
@@ -72,7 +73,7 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 
 	if token.RetryAfter > 0 {
 		if len(tokens.pool) == 1 {
-			gologger.Verbosef("GitHub Search request rate limit exceeded, waiting for %d seconds before retry... \n", s.Name(), token.RetryAfter)
+			gologger.Verbosef("GitHub Search request rate limit exceeded, waiting for %d seconds before retry... \n", s.Name, token.RetryAfter)
 			time.Sleep(time.Duration(token.RetryAfter) * time.Second)
 		} else {
 			token = tokens.Get()
@@ -85,7 +86,7 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 	resp, err := session.Get(ctx, searchURL, "", headers)
 	isForbidden := resp != nil && resp.StatusCode == http.StatusForbidden
 	if err != nil && !isForbidden {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		session.DiscardHTTPResponse(resp)
 		return
 	}
@@ -105,16 +106,16 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 	// Marshall json response
 	err = jsoniter.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		resp.Body.Close()
 		return
 	}
 
 	resp.Body.Close()
 
-	err = proccesItems(ctx, data.Items, domainRegexp, s.Name(), session, results)
+	err = proccesItems(ctx, data.Items, domainRegexp, s.Name, session, results)
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		return
 	}
 
@@ -125,7 +126,7 @@ func (s *Source) enumerate(ctx context.Context, searchURL string, domainRegexp *
 		if link.Rel == "next" {
 			nextURL, err := url.QueryUnescape(link.URL)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				return
 			}
 			s.enumerate(ctx, nextURL, domainRegexp, tokens, session, results)
@@ -187,9 +188,4 @@ func rawURL(htmlURL string) string {
 func domainRegexp(domain string) *regexp.Regexp {
 	rdomain := strings.ReplaceAll(domain, ".", "\\.")
 	return regexp.MustCompile("(\\w+[.])*" + rdomain)
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "github"
 }

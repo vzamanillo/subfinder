@@ -71,11 +71,11 @@ var DefaultSources = []string{
 // a layer to build upon.
 type Agent struct {
 	sources map[string]subscraping.Source
-	keys *subscraping.Keys
+	keys    *subscraping.Keys
 }
 
 // New creates a new agent for passive subdomain discovery
-func New(sources []string, exclusions []string, keys *subscraping.Keys) *Agent {
+func New(sources, exclusions []string, keys *subscraping.Keys) *Agent {
 	// Create the agent, insert the sources and remove the excluded sources
 	agent := &Agent{sources: make(map[string]subscraping.Source), keys: keys}
 
@@ -90,63 +90,67 @@ func (a *Agent) addSources(sources []string) {
 	for _, source := range sources {
 		switch source {
 		case "alienvault":
-			a.sources[source] = &alienvault.Source{}
+			a.sources[source] = &alienvault.Source{Name: source}
 		case "archiveis":
-			a.sources[source] = &archiveis.Source{}
+			a.sources[source] = &archiveis.Source{Name: source}
 		case "binaryedge":
-			a.sources[source] = &binaryedge.Source{Key: a.keys.Binaryedge}
+			a.sources[source] = &binaryedge.Source{Name: source, Key: a.keys.BinaryEdge}
 		case "bufferover":
-			a.sources[source] = &bufferover.Source{}
+			a.sources[source] = &bufferover.Source{Name: source}
 		case "censys":
-			a.sources[source] = &censys.Source{Token: a.keys.CensysToken, Secret: a.keys.CensysSecret}
+			a.sources[source] = &censys.Source{Name: source, BasicAuth: &a.keys.Censys.BasicAuth}
 		case "certspotter":
-			a.sources[source] = &certspotter.Source{Token: a.keys.Certspotter}
+			a.sources[source] = &certspotter.Source{Name: source, Token: a.keys.CertSpotter}
 		case "certspotterold":
-			a.sources[source] = &certspotterold.Source{}
+			a.sources[source] = &certspotterold.Source{Name: source}
 		case "commoncrawl":
-			a.sources[source] = &commoncrawl.Source{}
+			a.sources[source] = &commoncrawl.Source{Name: source}
 		case "crtsh":
-			a.sources[source] = &crtsh.Source{}
+			a.sources[source] = &crtsh.Source{Name: source}
 		case "dnsdumpster":
-			a.sources[source] = &dnsdumpster.Source{}
+			a.sources[source] = &dnsdumpster.Source{Name: source}
 		case "dnsdb":
-			a.sources[source] = &dnsdb.Source{Key: a.keys.DNSDB}
+			a.sources[source] = &dnsdb.Source{Name: source, Key: a.keys.DNSDB}
 		case "entrust":
-			a.sources[source] = &entrust.Source{}
+			a.sources[source] = &entrust.Source{Name: source}
 		case "github":
-			a.sources[source] = &github.Source{Tokens: a.keys.GitHub}
+			a.sources[source] = &github.Source{Name: source, Tokens: a.keys.GitHub.Keys}
 		case "hackertarget":
-			a.sources[source] = &hackertarget.Source{}
+			a.sources[source] = &hackertarget.Source{Name: source}
 		case "ipv4info":
-			a.sources[source] = &ipv4info.Source{}
+			a.sources[source] = &ipv4info.Source{Name: source}
 		case "intelx":
-			a.sources[source] = &intelx.Source{Host: a.keys.IntelXHost, Key: a.keys.IntelXKey}
+			a.sources[source] = &intelx.Source{
+				Name: source,
+				Host: a.keys.IntelX.Host,
+				Key:  a.keys.IntelX.Key,
+			}
 		case "passivetotal":
-			a.sources[source] = &passivetotal.Source{Username: a.keys.PassiveTotalUsername, Password: a.keys.PassiveTotalPassword}
+			a.sources[source] = &passivetotal.Source{Name: source, BasicAuth: &a.keys.PassiveTotal.BasicAuth}
 		case "rapiddns":
-			a.sources[source] = &rapiddns.Source{}
+			a.sources[source] = &rapiddns.Source{Name: source}
 		case "securitytrails":
-			a.sources[source] = &securitytrails.Source{Key: a.keys.Securitytrails}
+			a.sources[source] = &securitytrails.Source{Name: source, Key: a.keys.SecurityTrails}
 		case "shodan":
-			a.sources[source] = &shodan.Source{Key: a.keys.Shodan}
+			a.sources[source] = &shodan.Source{Name: source, Key: a.keys.Shodan}
 		case "sitedossier":
-			a.sources[source] = &sitedossier.Source{}
+			a.sources[source] = &sitedossier.Source{Name: source}
 		case "spyse":
-			a.sources[source] = &spyse.Source{Token: a.keys.Spyse}
+			a.sources[source] = &spyse.Source{Name: source, Token: a.keys.Spyse}
 		case "sublist3r":
-			a.sources[source] = &sublist3r.Source{}
+			a.sources[source] = &sublist3r.Source{Name: source}
 		case "threatcrowd":
-			a.sources[source] = &threatcrowd.Source{}
+			a.sources[source] = &threatcrowd.Source{Name: source}
 		case "threatminer":
-			a.sources[source] = &threatminer.Source{}
+			a.sources[source] = &threatminer.Source{Name: source}
 		case "urlscan":
-			a.sources[source] = &urlscan.Source{Key: a.keys.URLScan}
+			a.sources[source] = &urlscan.Source{Name: source, Key: a.keys.URLScan}
 		case "virustotal":
-			a.sources[source] = &virustotal.Source{Key: a.keys.Virustotal}
+			a.sources[source] = &virustotal.Source{Name: source, Key: a.keys.VirusTotal}
 		case "waybackarchive":
-			a.sources[source] = &waybackarchive.Source{}
+			a.sources[source] = &waybackarchive.Source{Name: source}
 		case "zoomeye":
-			a.sources[source] = &zoomeye.Source{Username: a.keys.ZoomEyeUsername, Password: a.keys.ZoomEyePassword}
+			a.sources[source] = &zoomeye.Source{Name: source, BasicAuth: &a.keys.ZoomEye.BasicAuth}
 		}
 	}
 }

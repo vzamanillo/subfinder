@@ -22,7 +22,7 @@ type agent struct {
 	session *subscraping.Session
 }
 
-func (a *agent) enumerate(ctx context.Context, baseURL string) error {
+func (a *agent) enumerate(ctx context.Context, baseURL, sourcename string) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -30,7 +30,7 @@ func (a *agent) enumerate(ctx context.Context, baseURL string) error {
 		default:
 			resp, err := a.session.SimpleGet(ctx, baseURL)
 			if err != nil {
-				a.results <- subscraping.Result{Source: "sitedossier", Type: subscraping.Error, Error: err}
+				a.results <- subscraping.Result{Source: sourcename, Type: subscraping.Error, Error: err}
 				a.session.DiscardHTTPResponse(resp)
 				close(a.results)
 				return err
@@ -38,7 +38,7 @@ func (a *agent) enumerate(ctx context.Context, baseURL string) error {
 
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				a.results <- subscraping.Result{Source: "sitedossier", Type: subscraping.Error, Error: err}
+				a.results <- subscraping.Result{Source: sourcename, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				close(a.results)
 				return err
@@ -47,14 +47,14 @@ func (a *agent) enumerate(ctx context.Context, baseURL string) error {
 
 			src := string(body)
 			for _, match := range a.session.Extractor.FindAllString(src, -1) {
-				a.results <- subscraping.Result{Source: "sitedossier", Type: subscraping.Subdomain, Value: match}
+				a.results <- subscraping.Result{Source: sourcename, Type: subscraping.Subdomain, Value: match}
 			}
 
 			match1 := reNext.FindStringSubmatch(src)
 			time.Sleep(time.Duration((3 + rand.Intn(SleepRandIntn))) * time.Second)
 
 			if len(match1) > 0 {
-				err := a.enumerate(ctx, "http://www.sitedossier.com"+match1[1])
+				err := a.enumerate(ctx, "http://www.sitedossier.com"+match1[1], sourcename)
 				if err != nil {
 					return err
 				}
@@ -65,7 +65,9 @@ func (a *agent) enumerate(ctx context.Context, baseURL string) error {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct {
+	Name string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -77,15 +79,10 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	}
 
 	go func() {
-		err := a.enumerate(ctx, fmt.Sprintf("http://www.sitedossier.com/parentdomain/%s", domain))
+		err := a.enumerate(ctx, fmt.Sprintf("http://www.sitedossier.com/parentdomain/%s", domain), s.Name)
 		if err == nil {
 			close(a.results)
 		}
 	}()
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "sitedossier"
 }

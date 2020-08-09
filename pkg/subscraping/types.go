@@ -8,8 +8,8 @@ import (
 
 // BasicAuth request's Authorization header
 type BasicAuth struct {
-	Username string
-	Password string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // Source is an interface inherited by each passive source
@@ -18,8 +18,6 @@ type Source interface {
 	// which contains the extractor for subdomains, http client
 	// and other stuff.
 	Run(context.Context, string, *Session) <-chan Result
-	// Name returns the name of the source
-	Name() string
 }
 
 // Session is the option passed to the source, an option is created
@@ -33,24 +31,26 @@ type Session struct {
 
 // Keys contains the current API Keys we have in store
 type Keys struct {
-	Binaryedge           string   `json:"binaryedge"`
-	CensysToken          string   `json:"censysUsername"`
-	CensysSecret         string   `json:"censysPassword"`
-	Certspotter          string   `json:"certspotter"`
-	Chaos                string   `json:"chaos"`
-	DNSDB                string   `json:"dnsdb"`
-	GitHub               []string `json:"github"`
-	IntelXHost           string   `json:"intelXHost"`
-	IntelXKey            string   `json:"intelXKey"`
-	PassiveTotalUsername string   `json:"passivetotal_username"`
-	PassiveTotalPassword string   `json:"passivetotal_password"`
-	Securitytrails       string   `json:"securitytrails"`
-	Shodan               string   `json:"shodan"`
-	Spyse                string   `json:"spyse"`
-	URLScan              string   `json:"urlscan"`
-	Virustotal           string   `json:"virustotal"`
-	ZoomEyeUsername      string   `json:"zoomeye_username"`
-	ZoomEyePassword      string   `json:"zoomeye_password"`
+	BinaryEdge  string                        `json:"binaryedge"`
+	Censys      struct{ BasicAuth BasicAuth } `json:"censys"`
+	CertSpotter string                        `json:"certspotter"`
+	Chaos       string                        `json:"chaos"`
+	DNSDB       string                        `json:"dnsdb"`
+	GitHub      struct {
+		Keys []string `json:"keys"`
+	}
+	IntelX struct {
+		Host string `json:"host"`
+		Key  string `json:"key"`
+	} `json:"intelx"`
+	PassiveTotal   struct{ BasicAuth BasicAuth } `json:"passivetotal"`
+	SecurityTrails string                        `json:"securitytrails"`
+	Shodan         string                        `json:"shodan"`
+	ShodanDNSDB    string                        `json:"shodandnsdb"`
+	Spyse          string                        `json:"spyse"`
+	URLScan        string                        `json:"urlscan"`
+	VirusTotal     string                        `json:"virustotal"`
+	ZoomEye        struct{ BasicAuth BasicAuth } `json:"zoomeye"`
 }
 
 // Result is a result structure returned by a source

@@ -3,7 +3,6 @@ package runner
 import (
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/projectdiscovery/subfinder/pkg/subscraping"
@@ -24,21 +23,8 @@ type ConfigFile struct {
 	Sources []string `yaml:"sources,omitempty"`
 	// ExcludeSources contains the sources to not include in the enumeration process
 	ExcludeSources []string `yaml:"exclude-sources,omitempty"`
-	// API keys for different sources
-	Binaryedge     []string `yaml:"binaryedge"`
-	Censys         []string `yaml:"censys"`
-	Certspotter    []string `yaml:"certspotter"`
-	Chaos          []string `yaml:"chaos"`
-	DNSDB          []string `yaml:"dnsdb"`
-	GitHub         []string `yaml:"github"`
-	IntelX         []string `yaml:"intelx"`
-	PassiveTotal   []string `yaml:"passivetotal"`
-	SecurityTrails []string `yaml:"securitytrails"`
-	Shodan         []string `yaml:"shodan"`
-	Spyse          []string `yaml:"spyse"`
-	URLScan        []string `yaml:"urlscan"`
-	Virustotal     []string `yaml:"virustotal"`
-	ZoomEye        []string `yaml:"zoomeye"`
+	// ExcludeSources contains the source keys for autentication
+	Keys subscraping.Keys `yaml:"keys,omitempty"`
 }
 
 // GetConfigDirectory gets the subfinder config directory for a user
@@ -99,81 +85,4 @@ func UnmarshalRead(file string) (ConfigFile, error) {
 	err = yaml.NewDecoder(f).Decode(&config)
 	f.Close()
 	return config, err
-}
-
-// GetKeys gets the API keys from config file and creates a Keys struct
-// We use random selection of api keys from the list of keys supplied.
-// Keys that require 2 options are separated by colon (:).
-func (c ConfigFile) GetKeys() *subscraping.Keys {
-	keys := &subscraping.Keys{}
-
-	if len(c.Binaryedge) > 0 {
-		keys.Binaryedge = c.Binaryedge[rand.Intn(len(c.Binaryedge))]
-	}
-
-	if len(c.Censys) > 0 {
-		censysKeys := c.Censys[rand.Intn(len(c.Censys))]
-		parts := strings.Split(censysKeys, ":")
-		if len(parts) == MultipleKeyPartsLength {
-			keys.CensysToken = parts[0]
-			keys.CensysSecret = parts[1]
-		}
-	}
-
-	if len(c.Certspotter) > 0 {
-		keys.Certspotter = c.Certspotter[rand.Intn(len(c.Certspotter))]
-	}
-	if len(c.Chaos) > 0 {
-		keys.Chaos = c.Chaos[rand.Intn(len(c.Chaos))]
-	}
-	if (len(c.DNSDB)) > 0 {
-		keys.DNSDB = c.DNSDB[rand.Intn(len(c.DNSDB))]
-	}
-	if (len(c.GitHub)) > 0 {
-		keys.GitHub = c.GitHub
-	}
-
-	if len(c.IntelX) > 0 {
-		intelxKeys := c.IntelX[rand.Intn(len(c.IntelX))]
-		parts := strings.Split(intelxKeys, ":")
-		if len(parts) == MultipleKeyPartsLength {
-			keys.IntelXHost = parts[0]
-			keys.IntelXKey = parts[1]
-		}
-	}
-
-	if len(c.PassiveTotal) > 0 {
-		passiveTotalKeys := c.PassiveTotal[rand.Intn(len(c.PassiveTotal))]
-		parts := strings.Split(passiveTotalKeys, ":")
-		if len(parts) == MultipleKeyPartsLength {
-			keys.PassiveTotalUsername = parts[0]
-			keys.PassiveTotalPassword = parts[1]
-		}
-	}
-
-	if len(c.SecurityTrails) > 0 {
-		keys.Securitytrails = c.SecurityTrails[rand.Intn(len(c.SecurityTrails))]
-	}
-	if len(c.Shodan) > 0 {
-		keys.Shodan = c.Shodan[rand.Intn(len(c.Shodan))]
-	}
-	if len(c.Spyse) > 0 {
-		keys.Spyse = c.Spyse[rand.Intn(len(c.Spyse))]
-	}
-	if len(c.URLScan) > 0 {
-		keys.URLScan = c.URLScan[rand.Intn(len(c.URLScan))]
-	}
-	if len(c.Virustotal) > 0 {
-		keys.Virustotal = c.Virustotal[rand.Intn(len(c.Virustotal))]
-	}
-	if len(c.ZoomEye) > 0 {
-		zoomEyeKeys := c.ZoomEye[rand.Intn(len(c.ZoomEye))]
-		parts := strings.Split(zoomEyeKeys, ":")
-		if len(parts) == MultipleKeyPartsLength {
-			keys.ZoomEyeUsername = parts[0]
-			keys.ZoomEyePassword = parts[1]
-		}
-	}
-
-	return keys
 }
