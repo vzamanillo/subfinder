@@ -104,8 +104,8 @@ func UnmarshalRead(file string) (ConfigFile, error) {
 // GetKeys gets the API keys from config file and creates a Keys struct
 // We use random selection of api keys from the list of keys supplied.
 // Keys that require 2 options are separated by colon (:).
-func (c *ConfigFile) GetKeys() subscraping.Keys {
-	keys := subscraping.Keys{}
+func (c ConfigFile) GetKeys() *subscraping.Keys {
+	keys := &subscraping.Keys{}
 
 	if len(c.Binaryedge) > 0 {
 		keys.Binaryedge = c.Binaryedge[rand.Intn(len(c.Binaryedge))]

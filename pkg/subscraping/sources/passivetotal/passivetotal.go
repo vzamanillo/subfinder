@@ -13,7 +13,10 @@ type response struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Username string
+	Password string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -22,7 +25,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.PassiveTotalUsername == "" || session.Keys.PassiveTotalPassword == "" {
+		if s.Username == "" || s.Password == "" {
 			return
 		}
 
@@ -36,7 +39,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			"",
 			map[string]string{"Content-Type": "application/json"},
 			bytes.NewBuffer(request),
-			subscraping.BasicAuth{Username: session.Keys.PassiveTotalUsername, Password: session.Keys.PassiveTotalPassword},
+			subscraping.BasicAuth{Username: s.Username, Password: s.Password},
 		)
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}

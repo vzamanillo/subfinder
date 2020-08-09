@@ -36,7 +36,9 @@ type response struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Tokens []string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -45,11 +47,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if len(session.Keys.GitHub) == 0 {
+		if len(s.Tokens) == 0 {
 			return
 		}
 
-		tokens := NewTokenManager(session.Keys.GitHub)
+		tokens := NewTokenManager(s.Tokens)
 
 		// search on GitHub with exact match
 		searchURL := fmt.Sprintf("https://api.github.com/search/code?per_page=100&q=\"%s\"", domain)

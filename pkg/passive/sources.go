@@ -71,12 +71,13 @@ var DefaultSources = []string{
 // a layer to build upon.
 type Agent struct {
 	sources map[string]subscraping.Source
+	keys *subscraping.Keys
 }
 
 // New creates a new agent for passive subdomain discovery
-func New(sources, exclusions []string) *Agent {
+func New(sources []string, exclusions []string, keys *subscraping.Keys) *Agent {
 	// Create the agent, insert the sources and remove the excluded sources
-	agent := &Agent{sources: make(map[string]subscraping.Source)}
+	agent := &Agent{sources: make(map[string]subscraping.Source), keys: keys}
 
 	agent.addSources(sources)
 	agent.removeSources(exclusions)
@@ -93,13 +94,13 @@ func (a *Agent) addSources(sources []string) {
 		case "archiveis":
 			a.sources[source] = &archiveis.Source{}
 		case "binaryedge":
-			a.sources[source] = &binaryedge.Source{}
+			a.sources[source] = &binaryedge.Source{Key: a.keys.Binaryedge}
 		case "bufferover":
 			a.sources[source] = &bufferover.Source{}
 		case "censys":
-			a.sources[source] = &censys.Source{}
+			a.sources[source] = &censys.Source{Token: a.keys.CensysToken, Secret: a.keys.CensysSecret}
 		case "certspotter":
-			a.sources[source] = &certspotter.Source{}
+			a.sources[source] = &certspotter.Source{Token: a.keys.Certspotter}
 		case "certspotterold":
 			a.sources[source] = &certspotterold.Source{}
 		case "commoncrawl":
@@ -109,29 +110,29 @@ func (a *Agent) addSources(sources []string) {
 		case "dnsdumpster":
 			a.sources[source] = &dnsdumpster.Source{}
 		case "dnsdb":
-			a.sources[source] = &dnsdb.Source{}
+			a.sources[source] = &dnsdb.Source{Key: a.keys.DNSDB}
 		case "entrust":
 			a.sources[source] = &entrust.Source{}
 		case "github":
-			a.sources[source] = &github.Source{}
+			a.sources[source] = &github.Source{Tokens: a.keys.GitHub}
 		case "hackertarget":
 			a.sources[source] = &hackertarget.Source{}
 		case "ipv4info":
 			a.sources[source] = &ipv4info.Source{}
 		case "intelx":
-			a.sources[source] = &intelx.Source{}
+			a.sources[source] = &intelx.Source{Host: a.keys.IntelXHost, Key: a.keys.IntelXKey}
 		case "passivetotal":
-			a.sources[source] = &passivetotal.Source{}
+			a.sources[source] = &passivetotal.Source{Username: a.keys.PassiveTotalUsername, Password: a.keys.PassiveTotalPassword}
 		case "rapiddns":
 			a.sources[source] = &rapiddns.Source{}
 		case "securitytrails":
-			a.sources[source] = &securitytrails.Source{}
+			a.sources[source] = &securitytrails.Source{Key: a.keys.Securitytrails}
 		case "shodan":
-			a.sources[source] = &shodan.Source{}
+			a.sources[source] = &shodan.Source{Key: a.keys.Shodan}
 		case "sitedossier":
 			a.sources[source] = &sitedossier.Source{}
 		case "spyse":
-			a.sources[source] = &spyse.Source{}
+			a.sources[source] = &spyse.Source{Token: a.keys.Spyse}
 		case "sublist3r":
 			a.sources[source] = &sublist3r.Source{}
 		case "threatcrowd":
@@ -139,13 +140,13 @@ func (a *Agent) addSources(sources []string) {
 		case "threatminer":
 			a.sources[source] = &threatminer.Source{}
 		case "urlscan":
-			a.sources[source] = &urlscan.Source{}
+			a.sources[source] = &urlscan.Source{Key: a.keys.URLScan}
 		case "virustotal":
-			a.sources[source] = &virustotal.Source{}
+			a.sources[source] = &virustotal.Source{Key: a.keys.Virustotal}
 		case "waybackarchive":
 			a.sources[source] = &waybackarchive.Source{}
 		case "zoomeye":
-			a.sources[source] = &zoomeye.Source{}
+			a.sources[source] = &zoomeye.Source{Username: a.keys.ZoomEyeUsername, Password: a.keys.ZoomEyePassword}
 		}
 	}
 }

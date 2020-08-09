@@ -14,7 +14,7 @@ import (
 )
 
 // NewSession creates a new session object for a domain
-func NewSession(domain string, keys *Keys, timeout int) (*Session, error) {
+func NewSession(domain string, timeout int) (*Session, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        100,
@@ -26,10 +26,7 @@ func NewSession(domain string, keys *Keys, timeout int) (*Session, error) {
 		Timeout: time.Duration(timeout) * time.Second,
 	}
 
-	session := &Session{
-		Client: client,
-		Keys:   keys,
-	}
+	session := &Session{Client: client}
 
 	// Create a new extractor object for the current domain
 	extractor, err := NewSubdomainExtractor(domain)

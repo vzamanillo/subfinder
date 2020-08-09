@@ -10,7 +10,9 @@ import (
 )
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Key string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -19,11 +21,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.URLScan == "" {
+		if s.Key == "" {
 			return
 		}
 
-		client := urlscan.NewClient(session.Keys.URLScan)
+		client := urlscan.NewClient(s.Key)
 		task, err := client.Submit(urlscan.SubmitArguments{URL: fmt.Sprintf("https://%s", domain)})
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}

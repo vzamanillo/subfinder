@@ -30,7 +30,10 @@ type zoomeyeResults struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Username string
+	Password string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -39,11 +42,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.ZoomEyeUsername == "" || session.Keys.ZoomEyePassword == "" {
+		if s.Username == "" || s.Password == "" {
 			return
 		}
 
-		jwt, err := doLogin(ctx, session)
+		jwt, err := doLogin(ctx, session, &zoomAuth{User: s.Username, Pass: s.Password})
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			return
@@ -94,12 +97,8 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 }
 
 // doLogin performs authentication on the ZoomEye API
-func doLogin(ctx context.Context, session *subscraping.Session) (string, error) {
-	creds := &zoomAuth{
-		User: session.Keys.ZoomEyeUsername,
-		Pass: session.Keys.ZoomEyePassword,
-	}
-	body, err := json.Marshal(&creds)
+func doLogin(ctx context.Context, session *subscraping.Session, auth *zoomAuth) (string, error) {
+	body, err := json.Marshal(auth)
 	if err != nil {
 		return "", err
 	}

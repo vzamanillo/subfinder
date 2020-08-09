@@ -35,7 +35,10 @@ type requestBody struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Host string
+	Key  string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -44,11 +47,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.IntelXKey == "" || session.Keys.IntelXHost == "" {
+		if s.Key == "" || s.Host == "" {
 			return
 		}
 
-		searchURL := fmt.Sprintf("https://%s/phonebook/search?k=%s", session.Keys.IntelXHost, session.Keys.IntelXKey)
+		searchURL := fmt.Sprintf("https://%s/phonebook/search?k=%s", s.Host, s.Key)
 		reqBody := requestBody{
 			Term:       domain,
 			Maxresults: 100000,
@@ -80,7 +83,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp.Body.Close()
 
-		resultsURL := fmt.Sprintf("https://%s/phonebook/search/result?k=%s&id=%s&limit=10000", session.Keys.IntelXHost, session.Keys.IntelXKey, response.ID)
+		resultsURL := fmt.Sprintf("https://%s/phonebook/search/result?k=%s&id=%s&limit=10000", s.Host, s.Key, response.ID)
 		status := 0
 		for status == 0 || status == 3 {
 			resp, err = session.Get(ctx, resultsURL, "", nil)

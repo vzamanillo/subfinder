@@ -14,7 +14,9 @@ type certspotterObject struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Token string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -23,11 +25,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.Certspotter == "" {
+		if s.Token == "" {
 			return
 		}
 
-		resp, err := session.Get(ctx, fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names", domain), "", map[string]string{"Authorization": "Bearer " + session.Keys.Certspotter})
+		resp, err := session.Get(ctx, fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names", domain), "", map[string]string{"Authorization": "Bearer " + s.Token})
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
@@ -58,7 +60,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		for {
 			reqURL := fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names&after=%s", domain, id)
 
-			resp, err := session.Get(ctx, reqURL, "", map[string]string{"Authorization": "Bearer " + session.Keys.Certspotter})
+			resp, err := session.Get(ctx, reqURL, "", map[string]string{"Authorization": "Bearer " + s.Token})
 			if err != nil {
 				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 				return

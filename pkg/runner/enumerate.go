@@ -17,10 +17,6 @@ import (
 func (r *Runner) EnumerateSingleDomain(ctx context.Context, domain, output string, appendToFile bool) error {
 	gologger.Infof("Enumerating subdomains for %s\n", domain)
 
-	// Get the API keys for sources from the configuration
-	// and also create the active resolving engine for the domain.
-	keys := r.options.YAMLConfig.GetKeys()
-
 	// Check if the user has asked to remove wildcards explicitly.
 	// If yes, create the resolution pool and get the wildcards for the current domain
 	var resolutionPool *resolve.ResolutionPool
@@ -34,7 +30,7 @@ func (r *Runner) EnumerateSingleDomain(ctx context.Context, domain, output strin
 	}
 
 	// Run the passive subdomain enumeration
-	passiveResults := r.passiveAgent.EnumerateSubdomains(domain, &keys, r.options.Timeout, time.Duration(r.options.MaxEnumerationTime)*time.Minute)
+	passiveResults := r.passiveAgent.EnumerateSubdomains(domain, r.options.Timeout, time.Duration(r.options.MaxEnumerationTime)*time.Minute)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)

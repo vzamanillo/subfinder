@@ -16,7 +16,9 @@ type dnsdbResponse struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Key string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -25,12 +27,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.DNSDB == "" {
+		if s.Key == "" {
 			return
 		}
 
 		headers := map[string]string{
-			"X-API-KEY":    session.Keys.DNSDB,
+			"X-API-KEY":    s.Key,
 			"Accept":       "application/json",
 			"Content-Type": "application/json",
 		}
