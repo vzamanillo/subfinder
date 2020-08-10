@@ -27,7 +27,6 @@ import (
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/sublist3r"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/threatcrowd"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/threatminer"
-	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/urlscan"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/virustotal"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/waybackarchive"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/zoomeye"
@@ -60,7 +59,6 @@ var DefaultSources = []string{
 	"sublist3r",
 	"threatcrowd",
 	"threatminer",
-	"urlscan",
 	"virustotal",
 	"waybackarchive",
 	"zoomeye",
@@ -143,8 +141,6 @@ func (a *Agent) addSources(sources []string) {
 			a.sources[source] = &threatcrowd.Source{Name: source}
 		case "threatminer":
 			a.sources[source] = &threatminer.Source{Name: source}
-		case "urlscan":
-			a.sources[source] = &urlscan.Source{Name: source, Key: a.keys.URLScan}
 		case "virustotal":
 			a.sources[source] = &virustotal.Source{Name: source, Key: a.keys.VirusTotal}
 		case "waybackarchive":
