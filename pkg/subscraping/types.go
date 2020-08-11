@@ -37,7 +37,7 @@ type Keys struct {
 	Chaos       string                        `json:"chaos"`
 	DNSDB       string                        `json:"dnsdb"`
 	GitHub      struct {
-		Keys []string `json:"keys"`
+		Tokens []string `json:"keys"`
 	}
 	IntelX struct {
 		Host string `json:"host"`

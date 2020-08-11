@@ -114,7 +114,7 @@ func (a *Agent) addSources(sources []string) {
 		case "entrust":
 			a.sources[source] = &entrust.Source{Name: source}
 		case "github":
-			a.sources[source] = &github.Source{Name: source, Tokens: a.keys.GitHub.Keys}
+			a.sources[source] = &github.Source{Name: source, Tokens: a.keys.GitHub.Tokens}
 		case "hackertarget":
 			a.sources[source] = &hackertarget.Source{Name: source}
 		case "ipv4info":
