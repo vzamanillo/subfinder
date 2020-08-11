@@ -100,7 +100,7 @@ func (a *Agent) addSources(sources []string) {
 		case "censys":
 			a.sources[source] = &censys.Source{
 				Name: source,
-				BasicAuth: &BasicAuth{
+				BasicAuth: &subscraping.BasicAuth{
 					Username: a.keys.Censys.Token,
 					Password: a.keys.Censys.Secret,
 				},
