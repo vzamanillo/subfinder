@@ -46,14 +46,18 @@ type Keys struct {
 		Host string `json:"host"`
 		Key  string `json:"key"`
 	} `json:"intelx"`
-	PassiveTotal   struct{ BasicAuth BasicAuth } `json:"passivetotal"`
-	SecurityTrails string                        `json:"securitytrails"`
-	Shodan         string                        `json:"shodan"`
-	ShodanDNSDB    string                        `json:"shodandnsdb"`
-	Spyse          string                        `json:"spyse"`
-	URLScan        string                        `json:"urlscan"`
-	VirusTotal     string                        `json:"virustotal"`
-	ZoomEye        struct{ BasicAuth BasicAuth } `json:"zoomeye"`
+	PassiveTotal struct {
+		BasicAuth BasicAuth
+	} `json:"passivetotal"`
+	SecurityTrails string `json:"securitytrails"`
+	Shodan         string `json:"shodan"`
+	ShodanDNSDB    string `json:"shodandnsdb"`
+	Spyse          string `json:"spyse"`
+	URLScan        string `json:"urlscan"`
+	VirusTotal     string `json:"virustotal"`
+	ZoomEye        struct {
+		BasicAuth BasicAuth
+	} `json:"zoomeye"`
 }
 
 // Result is a result structure returned by a source
