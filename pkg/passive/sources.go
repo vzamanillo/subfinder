@@ -98,7 +98,13 @@ func (a *Agent) addSources(sources []string) {
 		case "bufferover":
 			a.sources[source] = &bufferover.Source{Name: source}
 		case "censys":
-			a.sources[source] = &censys.Source{Name: source, BasicAuth: &a.keys.Censys.BasicAuth}
+			a.sources[source] = &censys.Source{
+				Name: source,
+				BasicAuth: &BasicAuth{
+					Username: a.keys.Censys.Token,
+					Password: a.keys.Censys.Secret,
+				},
+			}
 		case "certspotter":
 			a.sources[source] = &certspotter.Source{Name: source, Token: a.keys.CertSpotter}
 		case "certspotterold":
