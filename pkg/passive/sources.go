@@ -9,6 +9,7 @@ import (
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/censys"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/certspotter"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/certspotterold"
+	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/chaos"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/commoncrawl"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/crtsh"
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/dnsdb"
@@ -33,8 +34,48 @@ import (
 	"github.com/projectdiscovery/subfinder/pkg/subscraping/sources/zoomeye"
 )
 
-// DefaultSources contains the list of sources used by default
+// DefaultSources contains the list of fast sources used by default.
 var DefaultSources = []string{
+	"alienvault",
+	"binaryedge",
+	"bufferover",
+	"certspotter",
+	"certspotterold",
+	"censys",
+	"chaos",
+	"crtsh",
+	"dnsdumpster",
+	"hackertarget",
+	"intelx",
+	"ipv4info",
+	"passivetotal",
+	"securitytrails",
+	"shodan",
+	"spyse",
+	"sublist3r",
+	"threatcrowd",
+	"threatminer",
+	"virustotal",
+}
+
+// DefaultRecursiveSources contains list of default recursive sources
+var DefaultRecursiveSources = []string{
+	"alienvault",
+	"bufferover",
+	"certspotter",
+	"certspotterold",
+	"crtsh",
+	"dnsdumpster",
+	"hackertarget",
+	"ipv4info",
+	"passivetotal",
+	"securitytrails",
+	"sublist3r",
+	"virustotal",
+}
+
+// DefaultAllSources contains list of all sources
+var DefaultAllSources = []string{
 	"alienvault",
 	"archiveis",
 	"binaryedge",
@@ -42,6 +83,7 @@ var DefaultSources = []string{
 	"censys",
 	"certspotter",
 	"certspotterold",
+	"chaos",
 	"commoncrawl",
 	"crtsh",
 	"dnsdumpster",
@@ -109,6 +151,8 @@ func (a *Agent) addSources(sources []string) {
 			a.sources[source] = &certspotter.Source{Name: source, Token: a.keys.CertSpotter}
 		case "certspotterold":
 			a.sources[source] = &certspotterold.Source{Name: source}
+		case "chaos":
+			a.sources[source] = &chaos.Source{Name: source}
 		case "commoncrawl":
 			a.sources[source] = &commoncrawl.Source{Name: source}
 		case "crtsh":
