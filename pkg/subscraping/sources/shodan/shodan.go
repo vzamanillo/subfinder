@@ -9,7 +9,10 @@ import (
 )
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct {
+	Name string
+	Key  string
+}
 
 type dnsdbLookupResponse struct {
 	Domain string `json:"domain"`
@@ -20,12 +23,6 @@ type dnsdbLookupResponse struct {
 	} `json:"data"`
 	Result int    `json:"result"`
 	Error  string `json:"error"`
-}
-
-// Source is the passive scraping agent
-type Source struct {
-	Name string
-	Key  string
 }
 
 // Run function returns all subdomains found with the service
@@ -39,7 +36,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			return
 		}
 
-		searchURL := fmt.Sprintf("https://api.shodan.io/dns/domain/%s?key=%s", domain, session.Keys.Shodan)
+		searchURL := fmt.Sprintf("https://api.shodan.io/dns/domain/%s?key=%s", domain, s.Key)
 		resp, err := session.SimpleGet(ctx, searchURL)
 		if err != nil {
 			session.DiscardHTTPResponse(resp)
@@ -51,21 +48,21 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var response dnsdbLookupResponse
 		err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		if response.Error != "" {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%v", response.Error)}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("%v", response.Error)}
 			return
 		}
 
 		for _, data := range response.Data {
 			if data.Subdomain != "" {
 				if data.Type == "CNAME" {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: data.Value}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: data.Value}
 				} else if data.Type == "A" {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: fmt.Sprintf("%s.%s", data.Subdomain, domain)}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: fmt.Sprintf("%s.%s", data.Subdomain, domain)}
 				}
 			}
 		}
