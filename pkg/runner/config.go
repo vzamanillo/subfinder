@@ -31,7 +31,6 @@ type ConfigFile struct {
 	Keys subscraping.Keys `yaml:"keys,omitempty"`
 	// Version indicates the version of subfinder installed.
 	Version string `yaml:"subfinder-version"`
-
 }
 
 // GetConfigDirectory gets the subfinder config directory for a user

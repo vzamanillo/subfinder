@@ -152,7 +152,7 @@ func (a *Agent) addSources(sources []string) {
 		case "certspotterold":
 			a.sources[source] = &certspotterold.Source{Name: source}
 		case "chaos":
-			a.sources[source] = &chaos.Source{Name: source}
+			a.sources[source] = &chaos.Source{Name: source, Key: a.keys.Chaos}
 		case "commoncrawl":
 			a.sources[source] = &commoncrawl.Source{Name: source}
 		case "crtsh":
