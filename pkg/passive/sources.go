@@ -113,22 +113,21 @@ var DefaultAllSources = []string{
 // a layer to build upon.
 type Agent struct {
 	sources map[string]subscraping.Source
-	keys    *subscraping.Keys
 }
 
 // New creates a new agent for passive subdomain discovery
 func New(sources, exclusions []string, keys *subscraping.Keys) *Agent {
 	// Create the agent, insert the sources and remove the excluded sources
-	agent := &Agent{sources: make(map[string]subscraping.Source), keys: keys}
+	agent := &Agent{sources: make(map[string]subscraping.Source)}
 
-	agent.addSources(sources)
+	agent.addSources(sources, keys)
 	agent.removeSources(exclusions)
 
 	return agent
 }
 
 // addSources adds the given list of sources to the source array
-func (a *Agent) addSources(sources []string) {
+func (a *Agent) addSources(sources []string, keys *subscraping.Keys) {
 	for _, source := range sources {
 		switch source {
 		case "alienvault":
@@ -136,23 +135,23 @@ func (a *Agent) addSources(sources []string) {
 		case "archiveis":
 			a.sources[source] = &archiveis.Source{Name: source}
 		case "binaryedge":
-			a.sources[source] = &binaryedge.Source{Name: source, Key: a.keys.BinaryEdge}
+			a.sources[source] = &binaryedge.Source{Name: source, Key: keys.BinaryEdge}
 		case "bufferover":
 			a.sources[source] = &bufferover.Source{Name: source}
 		case "censys":
 			a.sources[source] = &censys.Source{
 				Name: source,
 				BasicAuth: &subscraping.BasicAuth{
-					Username: a.keys.Censys.Token,
-					Password: a.keys.Censys.Secret,
+					Username: keys.Censys.Token,
+					Password: keys.Censys.Secret,
 				},
 			}
 		case "certspotter":
-			a.sources[source] = &certspotter.Source{Name: source, Token: a.keys.CertSpotter}
+			a.sources[source] = &certspotter.Source{Name: source, Token: keys.CertSpotter}
 		case "certspotterold":
 			a.sources[source] = &certspotterold.Source{Name: source}
 		case "chaos":
-			a.sources[source] = &chaos.Source{Name: source, Key: a.keys.Chaos}
+			a.sources[source] = &chaos.Source{Name: source, Key: keys.Chaos}
 		case "commoncrawl":
 			a.sources[source] = &commoncrawl.Source{Name: source}
 		case "crtsh":
@@ -160,11 +159,11 @@ func (a *Agent) addSources(sources []string) {
 		case "dnsdumpster":
 			a.sources[source] = &dnsdumpster.Source{Name: source}
 		case "dnsdb":
-			a.sources[source] = &dnsdb.Source{Name: source, Key: a.keys.DNSDB}
+			a.sources[source] = &dnsdb.Source{Name: source, Key: keys.DNSDB}
 		case "entrust":
 			a.sources[source] = &entrust.Source{Name: source}
 		case "github":
-			a.sources[source] = &github.Source{Name: source, Tokens: a.keys.GitHub.Tokens}
+			a.sources[source] = &github.Source{Name: source, Tokens: keys.GitHub.Tokens}
 		case "hackertarget":
 			a.sources[source] = &hackertarget.Source{Name: source}
 		case "ipv4info":
@@ -172,23 +171,23 @@ func (a *Agent) addSources(sources []string) {
 		case "intelx":
 			a.sources[source] = &intelx.Source{
 				Name: source,
-				Host: a.keys.IntelX.Host,
-				Key:  a.keys.IntelX.Key,
+				Host: keys.IntelX.Host,
+				Key:  keys.IntelX.Key,
 			}
 		case "passivetotal":
-			a.sources[source] = &passivetotal.Source{Name: source, BasicAuth: &a.keys.PassiveTotal.BasicAuth}
+			a.sources[source] = &passivetotal.Source{Name: source, BasicAuth: &keys.PassiveTotal.BasicAuth}
 		case "rapiddns":
 			a.sources[source] = &rapiddns.Source{Name: source}
 		case "recon":
 			a.sources[source] = &recon.Source{Name: source}
 		case "securitytrails":
-			a.sources[source] = &securitytrails.Source{Name: source, Key: a.keys.SecurityTrails}
+			a.sources[source] = &securitytrails.Source{Name: source, Key: keys.SecurityTrails}
 		case "shodan":
-			a.sources[source] = &shodan.Source{Name: source, Key: a.keys.Shodan}
+			a.sources[source] = &shodan.Source{Name: source, Key: keys.Shodan}
 		case "sitedossier":
 			a.sources[source] = &sitedossier.Source{Name: source}
 		case "spyse":
-			a.sources[source] = &spyse.Source{Name: source, Token: a.keys.Spyse}
+			a.sources[source] = &spyse.Source{Name: source, Token: keys.Spyse}
 		case "sublist3r":
 			a.sources[source] = &sublist3r.Source{Name: source}
 		case "threatcrowd":
@@ -196,11 +195,11 @@ func (a *Agent) addSources(sources []string) {
 		case "threatminer":
 			a.sources[source] = &threatminer.Source{Name: source}
 		case "virustotal":
-			a.sources[source] = &virustotal.Source{Name: source, Key: a.keys.VirusTotal}
+			a.sources[source] = &virustotal.Source{Name: source, Key: keys.VirusTotal}
 		case "waybackarchive":
 			a.sources[source] = &waybackarchive.Source{Name: source}
 		case "zoomeye":
-			a.sources[source] = &zoomeye.Source{Name: source, BasicAuth: &a.keys.ZoomEye.BasicAuth}
+			a.sources[source] = &zoomeye.Source{Name: source, BasicAuth: &keys.ZoomEye.BasicAuth}
 		}
 	}
 }
