@@ -17,7 +17,7 @@ const (
 )
 
 // Source is the passive scraping agent
-type Source struct{
+type Source struct {
 	Name string
 	Key  string
 }
