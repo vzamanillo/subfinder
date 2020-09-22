@@ -15,6 +15,7 @@ type subdomain struct {
 // Source is the passive scraping agent
 type Source struct {
 	Name string
+	Key  string
 }
 
 // Run function returns all subdomains found with the service
@@ -24,11 +25,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.Recon == "" {
+		if s.Key == "" {
 			return
 		}
 
-		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://recon.dev/api/search?key=%s&domain=%s", session.Keys.Recon, domain))
+		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://recon.dev/api/search?key=%s&domain=%s", s.Key, domain))
 		if err != nil {
 			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)

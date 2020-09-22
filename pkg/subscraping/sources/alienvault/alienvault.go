@@ -30,7 +30,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://otx.alienvault.com/api/v1/indicators/domain/%s/passive_dns", domain))
 		if err != nil && resp == nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -46,7 +46,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		resp.Body.Close()
 
 		if response.Error != "" {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%s, %s", response.Detail, response.Error)}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("%s, %s", response.Detail, response.Error)}
 			return
 		}
 

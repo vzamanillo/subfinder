@@ -9,7 +9,9 @@ import (
 )
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Name string
+}
 
 type domain struct {
 	Domain string `json:"domain"`
@@ -30,7 +32,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("http://sbd.ximcx.cn/DomainServlet?domain=%s", domain))
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -38,26 +40,21 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var response ximcxResponse
 		err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
 		resp.Body.Close()
 
 		if response.Code > 0 {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%d, %s", response.Code, response.Message)}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("%d, %s", response.Code, response.Message)}
 			return
 		}
 
 		for _, result := range response.Data {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: result.Domain}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: result.Domain}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "ximcx"
 }

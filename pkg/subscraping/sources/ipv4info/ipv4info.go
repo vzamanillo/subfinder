@@ -25,7 +25,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("http://ipv4info.com/search/%s", domain))
 		if err != nil && resp == nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -41,7 +41,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		src := string(body)
 
 		if resp.StatusCode != http.StatusOK {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%s", src)}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("%s", src)}
 			return
 		}
 

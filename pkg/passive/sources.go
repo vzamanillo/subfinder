@@ -149,7 +149,7 @@ func (a *Agent) addSources(sources []string, keys *subscraping.Keys) {
 		case "alienvault":
 			a.sources[source] = &alienvault.Source{Name: source}
 		case "anubis":
-			a.sources[source] = &anubis.Source{}
+			a.sources[source] = &anubis.Source{Name: source}
 		case "archiveis":
 			a.sources[source] = &archiveis.Source{Name: source}
 		case "binaryedge":
@@ -157,7 +157,7 @@ func (a *Agent) addSources(sources []string, keys *subscraping.Keys) {
 		case "bufferover":
 			a.sources[source] = &bufferover.Source{Name: source}
 		case "cebaidu":
-			a.sources[source] = &cebaidu.Source{}
+			a.sources[source] = &cebaidu.Source{Name: source}
 		case "censys":
 			a.sources[source] = &censys.Source{
 				Name: source,
@@ -197,11 +197,11 @@ func (a *Agent) addSources(sources []string, keys *subscraping.Keys) {
 		case "rapiddns":
 			a.sources[source] = &rapiddns.Source{Name: source}
 		case "recon":
-			a.sources[source] = &recon.Source{Name: source}
+			a.sources[source] = &recon.Source{Name: source, Key: keys.Recon}
 		case "riddler":
-			a.sources[source] = &riddler.Source{}
+			a.sources[source] = &riddler.Source{Name: source}
 		case "robtex":
-			a.sources[source] = &robtex.Source{}
+			a.sources[source] = &robtex.Source{Name: source, Key: keys.Robtex}
 		case "securitytrails":
 			a.sources[source] = &securitytrails.Source{Name: source, Key: keys.SecurityTrails}
 		case "shodan":
@@ -213,7 +213,7 @@ func (a *Agent) addSources(sources []string, keys *subscraping.Keys) {
 		case "sublist3r":
 			a.sources[source] = &sublist3r.Source{Name: source}
 		case "threatbook":
-			a.sources[source] = &threatbook.Source{}
+			a.sources[source] = &threatbook.Source{Name: source, Key: keys.ThreatBook}
 		case "threatcrowd":
 			a.sources[source] = &threatcrowd.Source{Name: source}
 		case "threatminer":
@@ -223,7 +223,7 @@ func (a *Agent) addSources(sources []string, keys *subscraping.Keys) {
 		case "waybackarchive":
 			a.sources[source] = &waybackarchive.Source{Name: source}
 		case "ximcx":
-			a.sources[source] = &ximcx.Source{}
+			a.sources[source] = &ximcx.Source{Name: source}
 		case "zoomeye":
 			a.sources[source] = &zoomeye.Source{Name: source, BasicAuth: &keys.ZoomEye.BasicAuth}
 		}

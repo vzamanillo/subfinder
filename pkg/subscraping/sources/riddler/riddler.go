@@ -9,7 +9,9 @@ import (
 )
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Name string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -20,7 +22,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://riddler.io/search?q=pld:%s&view_type=data_table", domain))
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -33,16 +35,11 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			}
 			subdomain := session.Extractor.FindString(line)
 			if subdomain != "" {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 			}
 		}
 		resp.Body.Close()
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "riddler"
 }

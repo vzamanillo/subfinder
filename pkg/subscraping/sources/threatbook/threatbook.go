@@ -22,7 +22,10 @@ type threatBookResponse struct {
 }
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Name string
+	Key  string
+}
 
 // Run function returns all subdomains found with the service
 func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Session) <-chan subscraping.Result {
@@ -31,13 +34,13 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.ThreatBook == "" {
+		if s.Key == "" {
 			return
 		}
 
-		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://api.threatbook.cn/v3/domain/sub_domains?apikey=%s&resource=%s", session.Keys.ThreatBook, domain))
+		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://api.threatbook.cn/v3/domain/sub_domains?apikey=%s&resource=%s", s.Key, domain))
 		if err != nil && resp == nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -45,34 +48,29 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		var response threatBookResponse
 		err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			resp.Body.Close()
 			return
 		}
 		resp.Body.Close()
 
 		if response.ResponseCode != 0 {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("code %d, %s", response.ResponseCode, response.VerboseMsg)}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("code %d, %s", response.ResponseCode, response.VerboseMsg)}
 			return
 		}
 
 		total, err := strconv.ParseInt(response.Data.SubDomains.Total, 10, 64)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		if total > 0 {
 			for _, subdomain := range response.Data.SubDomains.Data {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 			}
 		}
 	}()
 
 	return results
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "threatbook"
 }

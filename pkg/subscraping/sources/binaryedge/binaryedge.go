@@ -51,22 +51,22 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		var baseURL string
 
-		authHeader := map[string]string{"X-Key": session.Keys.Binaryedge}
+		authHeader := map[string]string{"X-Key": s.Key}
 
 		if isV2(ctx, session, authHeader) {
 			baseURL = fmt.Sprintf(baseAPIURLFmt, v2, domain)
 		} else {
-			authHeader = map[string]string{"X-Token": session.Keys.Binaryedge}
+			authHeader = map[string]string{"X-Token": s.Key}
 			v1URLWithPageSize, err := addURLParam(fmt.Sprintf(baseAPIURLFmt, v1, domain), v1PageSizeParam, strconv.Itoa(maxV1PageSize))
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				return
 			}
 			baseURL = v1URLWithPageSize.String()
 		}
 
 		if baseURL == "" {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("can't get API URL")}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("can't get API URL")}
 			return
 		}
 
@@ -79,13 +79,13 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 func (s *Source) enumerate(ctx context.Context, session *subscraping.Session, baseURL string, page int, authHeader map[string]string, results chan subscraping.Result) {
 	pageURL, err := addURLParam(baseURL, pageParam, strconv.Itoa(page))
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		return
 	}
 
 	resp, err := session.Get(ctx, pageURL.String(), "", authHeader)
 	if err != nil && resp == nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		session.DiscardHTTPResponse(resp)
 		return
 	}
@@ -93,20 +93,20 @@ func (s *Source) enumerate(ctx context.Context, session *subscraping.Session, ba
 	var response subdomainsResponse
 	err = jsoniter.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		resp.Body.Close()
 		return
 	}
 
 	// Check error messages
 	if response.Message != "" && response.Status != nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf(response.Message)}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf(response.Message)}
 	}
 
 	resp.Body.Close()
 
 	for _, subdomain := range response.Subdomains {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: subdomain}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: subdomain}
 	}
 
 	totalPages := int(math.Ceil(float64(response.Total) / float64(response.PageSize)))
@@ -114,11 +114,6 @@ func (s *Source) enumerate(ctx context.Context, session *subscraping.Session, ba
 	for currentPage := nextPage; currentPage <= totalPages; currentPage++ {
 		s.enumerate(ctx, session, baseURL, currentPage, authHeader, results)
 	}
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "binaryedge"
 }
 
 func isV2(ctx context.Context, session *subscraping.Session, authHeader map[string]string) bool {

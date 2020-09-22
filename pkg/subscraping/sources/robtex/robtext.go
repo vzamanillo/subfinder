@@ -17,7 +17,10 @@ const (
 )
 
 // Source is the passive scraping agent
-type Source struct{}
+type Source struct{
+	Name string
+	Key  string
+}
 
 type result struct {
 	Rrname string `json:"rrname"`
@@ -32,27 +35,27 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		if session.Keys.Robtex == "" {
+		if s.Key == "" {
 			return
 		}
 
 		headers := map[string]string{"Content-Type": "application/x-ndjson"}
 
-		ips, err := enumerate(ctx, session, fmt.Sprintf("%s/forward/%s?key=%s", baseURL, domain, session.Keys.Robtex), headers)
+		ips, err := enumerate(ctx, session, fmt.Sprintf("%s/forward/%s?key=%s", baseURL, domain, s.Key), headers)
 		if err != nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			return
 		}
 
 		for _, result := range ips {
 			if result.Rrtype == addrRecord || result.Rrtype == iPv6AddrRecord {
-				domains, err := enumerate(ctx, session, fmt.Sprintf("%s/reverse/%s?key=%s", baseURL, result.Rrdata, session.Keys.Robtex), headers)
+				domains, err := enumerate(ctx, session, fmt.Sprintf("%s/reverse/%s?key=%s", baseURL, result.Rrdata, s.Key), headers)
 				if err != nil {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 					return
 				}
 				for _, result := range domains {
-					results <- subscraping.Result{Source: s.Name(), Type: subscraping.Subdomain, Value: result.Rrdata}
+					results <- subscraping.Result{Source: s.Name, Type: subscraping.Subdomain, Value: result.Rrdata}
 				}
 			}
 		}
@@ -87,9 +90,4 @@ func enumerate(ctx context.Context, session *subscraping.Session, targetURL stri
 	resp.Body.Close()
 
 	return results, nil
-}
-
-// Name returns the name of the source
-func (s *Source) Name() string {
-	return "robtex"
 }

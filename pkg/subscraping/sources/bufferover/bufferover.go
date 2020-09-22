@@ -43,7 +43,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 func (s *Source) getData(ctx context.Context, sourceURL string, session *subscraping.Session, results chan subscraping.Result) {
 	resp, err := session.SimpleGet(ctx, sourceURL)
 	if err != nil && resp == nil {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 		session.DiscardHTTPResponse(resp)
 		return
 	}
@@ -61,7 +61,7 @@ func (s *Source) getData(ctx context.Context, sourceURL string, session *subscra
 	metaErrors := bufforesponse.Meta.Errors
 
 	if len(metaErrors) > 0 {
-		results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%s", strings.Join(metaErrors, ", "))}
+		results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("%s", strings.Join(metaErrors, ", "))}
 		return
 	}
 

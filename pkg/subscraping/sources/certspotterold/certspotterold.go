@@ -33,7 +33,7 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 
 		resp, err := session.SimpleGet(ctx, fmt.Sprintf("https://certspotter.com/api/v0/certs?domain=%s", domain))
 		if err != nil && resp == nil {
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -42,12 +42,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 			var errResponse errorResponse
 			err = jsoniter.NewDecoder(resp.Body).Decode(&errResponse)
 			if err != nil {
-				results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
+				results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
 				resp.Body.Close()
 				return
 			}
 
-			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%s: %s", errResponse.Code, errResponse.Message)}
+			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: fmt.Errorf("%s: %s", errResponse.Code, errResponse.Message)}
 			resp.Body.Close()
 			return
 		}
