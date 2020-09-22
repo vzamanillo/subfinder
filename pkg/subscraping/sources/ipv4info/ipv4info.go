@@ -2,7 +2,9 @@ package ipv4info
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"regexp"
 	"strconv"
 
@@ -21,9 +23,9 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 	go func() {
 		defer close(results)
 
-		resp, err := session.SimpleGet(ctx, "http://ipv4info.com/search/"+domain)
-		if err != nil {
-			results <- subscraping.Result{Source: s.Name, Type: subscraping.Error, Error: err}
+		resp, err := session.SimpleGet(ctx, fmt.Sprintf("http://ipv4info.com/search/%s", domain))
+		if err != nil && resp == nil {
+			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: err}
 			session.DiscardHTTPResponse(resp)
 			return
 		}
@@ -37,6 +39,12 @@ func (s *Source) Run(ctx context.Context, domain string, session *subscraping.Se
 		resp.Body.Close()
 
 		src := string(body)
+
+		if resp.StatusCode != http.StatusOK {
+			results <- subscraping.Result{Source: s.Name(), Type: subscraping.Error, Error: fmt.Errorf("%s", src)}
+			return
+		}
+
 		regxTokens := regexp.MustCompile("/ip-address/(.*)/" + domain)
 		matchTokens := regxTokens.FindAllString(src, -1)
 

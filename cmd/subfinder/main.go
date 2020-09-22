@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	// Attempts to increase the OS file descriptors - Fail silently
+	_ "github.com/projectdiscovery/fdmax/autofdmax"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/subfinder/pkg/runner"
 )

@@ -49,9 +49,10 @@ type Keys struct {
 	PassiveTotal struct {
 		BasicAuth BasicAuth
 	} `json:"passivetotal"`
+	Recon          string `json:"recon"`
+	Robtex         string `json:"robtex"`
 	SecurityTrails string `json:"securitytrails"`
 	Shodan         string `json:"shodan"`
-	ShodanDNSDB    string `json:"shodandnsdb"`
 	Spyse          string `json:"spyse"`
 	URLScan        string `json:"urlscan"`
 	VirusTotal     string `json:"virustotal"`
