@@ -36,10 +36,17 @@ func (options *Options) normalRunTasks() {
 	// If we have a different version of subfinder installed
 	// previously, use the new iteration of config file.
 	if configFile.Version != Version {
+
+		oldConfigFile, err := UnmarshalReadOld(options.ConfigFile)
+		if err != nil {
+			gologger.Fatalf("Could not read configuration file %s: %s\n", options.ConfigFile, err)
+		}
+
 		configFile.Sources = passive.DefaultSources
 		configFile.AllSources = passive.DefaultAllSources
 		configFile.Recursive = passive.DefaultRecursiveSources
 		configFile.Version = Version
+		configFile.Keys = *oldConfigFile.GetMigratedKeys()
 
 		err = configFile.MarshalWrite(options.ConfigFile)
 		if err != nil {
