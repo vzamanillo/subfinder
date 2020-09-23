@@ -47,8 +47,8 @@ type OldKeys struct {
 	IntelXKey            string   `json:"intelXKey"`
 	PassiveTotalUsername string   `json:"passivetotal_username"`
 	PassiveTotalPassword string   `json:"passivetotal_password"`
-	Recon 							 string   `json:"recon"`
-	Robtex 							 string   `json:"robtex"`
+	Recon                string   `json:"recon"`
+	Robtex               string   `json:"robtex"`
 	Securitytrails       string   `json:"securitytrails"`
 	Shodan               string   `json:"shodan"`
 	Spyse                string   `json:"spyse"`
@@ -60,14 +60,14 @@ type OldKeys struct {
 }
 
 // GetMigratedKeys returns the new keys structure form the old one
-func (c OldConfigFile) GetMigratedKeys() *subscraping.Keys {
+func (c *OldConfigFile) GetMigratedKeys() *subscraping.Keys {
 	oldKeys := c.GetKeys()
 
 	newKeys := &subscraping.Keys{
-		BinaryEdge: oldKeys.Binaryedge,
-		CertSpotter: oldKeys.Certspotter,
-		Chaos: oldKeys.Chaos,
-		DNSDB: oldKeys.DNSDB,
+		BinaryEdge:     oldKeys.Binaryedge,
+		CertSpotter:    oldKeys.Certspotter,
+		Chaos:          oldKeys.Chaos,
+		DNSDB:          oldKeys.DNSDB,
 		Recon:          oldKeys.Recon,
 		Robtex:         oldKeys.Robtex,
 		SecurityTrails: oldKeys.Securitytrails,
@@ -94,7 +94,7 @@ func (c OldConfigFile) GetMigratedKeys() *subscraping.Keys {
 // GetKeys gets the API keys from config file and creates a Keys struct
 // We use random selection of api keys from the list of keys supplied.
 // Keys that require 2 options are separated by colon (:).
-func (c OldConfigFile) GetKeys() *OldKeys {
+func (c *OldConfigFile) GetKeys() *OldKeys {
 	keys := &OldKeys{}
 
 	if len(c.Binaryedge) > 0 {

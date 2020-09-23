@@ -36,7 +36,6 @@ func (options *Options) normalRunTasks() {
 	// If we have a different version of subfinder installed
 	// previously, use the new iteration of config file.
 	if configFile.Version != Version {
-
 		oldConfigFile, err := UnmarshalReadOld(options.ConfigFile)
 		if err != nil {
 			gologger.Fatalf("Could not read configuration file %s: %s\n", options.ConfigFile, err)
