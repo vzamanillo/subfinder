@@ -23,11 +23,11 @@ type ConfigFile struct {
 	Sources []string `yaml:"sources,omitempty"`
 	// AllSources contains the list of all sources for enumeration (slow)
 	AllSources []string `yaml:"all-sources,omitempty"`
-	// Recrusive contains the list of recursive subdomain enum sources
+	// Recursive contains the list of recursive subdomain enum sources
 	Recursive []string `yaml:"recursive,omitempty"`
 	// ExcludeSources contains the sources to not include in the enumeration process
 	ExcludeSources []string `yaml:"exclude-sources,omitempty"`
-	// ExcludeSources contains the source keys for autentication
+	// Keys contains the source keys for autentication
 	Keys subscraping.Keys `yaml:"keys,omitempty"`
 	// Version indicates the version of subfinder installed.
 	Version string `yaml:"subfinder-version"`
