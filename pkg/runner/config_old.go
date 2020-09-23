@@ -26,12 +26,17 @@ type OldConfigFile struct {
 	GitHub         []string `yaml:"github"`
 	IntelX         []string `yaml:"intelx"`
 	PassiveTotal   []string `yaml:"passivetotal"`
+	Recon          []string `yaml:"recon"`
+	Robtex         []string `yaml:"robtex"`
 	SecurityTrails []string `yaml:"securitytrails"`
 	Shodan         []string `yaml:"shodan"`
 	Spyse          []string `yaml:"spyse"`
+	ThreatBook     []string `yaml:"threatbook"`
 	URLScan        []string `yaml:"urlscan"`
 	Virustotal     []string `yaml:"virustotal"`
 	ZoomEye        []string `yaml:"zoomeye"`
+	// Version indicates the version of subfinder installed.
+	Version string `yaml:"subfinder-version"`
 }
 
 // OldKeys is the old keys format struct
@@ -141,6 +146,14 @@ func (c *OldConfigFile) GetKeys() *OldKeys {
 		}
 	}
 
+	if len(c.Recon) > 0 {
+		keys.Recon = c.Recon[rand.Intn(len(c.Recon))]
+	}
+
+	if len(c.Robtex) > 0 {
+		keys.Robtex = c.Robtex[rand.Intn(len(c.Robtex))]
+	}
+
 	if len(c.SecurityTrails) > 0 {
 		keys.Securitytrails = c.SecurityTrails[rand.Intn(len(c.SecurityTrails))]
 	}
@@ -149,6 +162,9 @@ func (c *OldConfigFile) GetKeys() *OldKeys {
 	}
 	if len(c.Spyse) > 0 {
 		keys.Spyse = c.Spyse[rand.Intn(len(c.Spyse))]
+	}
+	if len(c.ThreatBook) > 0 {
+		keys.ThreatBook = c.ThreatBook[rand.Intn(len(c.ThreatBook))]
 	}
 	if len(c.URLScan) > 0 {
 		keys.URLScan = c.URLScan[rand.Intn(len(c.URLScan))]
