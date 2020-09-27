@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/projectdiscovery/subfinder/pkg/subscraping"
+	"github.com/projectdiscovery/subfinder/v2/pkg/subscraping"
 	"gopkg.in/yaml.v3"
 )
 
