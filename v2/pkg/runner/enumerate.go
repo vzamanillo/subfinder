@@ -57,7 +57,6 @@ func (r *Runner) EnumerateSingleDomain(ctx context.Context, domain, output strin
 
 				if _, ok := uniqueMap[subdomain]; !ok {
 					sourceMap[subdomain] = make(map[string]struct{})
-
 				}
 
 				// Log the verbose message about the found subdomain per source
